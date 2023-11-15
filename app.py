@@ -30,6 +30,9 @@ def csimetrico():
 def casimetrico():
     return render_template("casimetrico.html")
 
+@app.route("/hola/")
+def hola():
+    return render_template("about.html")
 
 @app.route("/about/")
 def about():
@@ -43,6 +46,9 @@ def doc():
 def otro():
     return render_template("otro.html")
 
+@app.route("/hola2/")
+def hola2():
+    return render_template("formulario.html")
 
 
 @app.route("/hello/")
@@ -58,3 +64,4 @@ def hello_there(name = None):
 @app.route("/api/data")
 def get_data():
     return app.send_static_file("data.json")
+
