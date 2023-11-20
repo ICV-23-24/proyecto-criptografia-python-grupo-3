@@ -26,9 +26,9 @@ def csimetrico():
 
     return render_template("csimetrico.html")
 
-@app.route("/casimetrico/")
-def casimetrico():
-    return render_template("casimetrico.html")
+# @app.route("/casimetrico/")
+# def casimetrico():
+#     return render_template("casimetrico.html")
 
 
 @app.route("/about/")
