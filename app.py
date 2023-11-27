@@ -67,86 +67,6 @@ def get_data():
 
 
 #########################################################################################################################
-# from flask import Flask, render_template, request, send_file
-# from cryptography.fernet import Fernet
-# import os
-# from googleapiclient.discovery import build
-# from googleapiclient.http import MediaFileUpload
-
-# app = Flask(__name__)
-
-# # Clave para el cifrado
-# key = Fernet.generate_key()
-# cipher_suite = Fernet(key)
-
-# # Credenciales de Google Drive API
-# # Reemplaza 'credentials.json' con el archivo de credenciales de tu aplicación en Google Cloud Platform
-# # Asegúrate de tener habilitada la API de Google Drive y descargado el archivo JSON de credenciales
-# # https://console.cloud.google.com/
-# creds = None
-# if os.path.exists('token.json'):
-#     creds = 'token.json'  # Reemplaza 'token.json' con tu token generado
-
-# drive_service = None
-# if creds:
-#     drive_service = build('drive', 'v3', credentials=creds)
-
-# @app.route('/')
-# def index():
-#     return render_template('formulario.html')
-
-# @app.route('/descargar')
-# def descargar():
-#     return send_file('encrypted_file.txt', as_attachment=True, download_name='encrypted_file.txt', mimetype='text/plain')
-
-# @app.route('/subir_drive')
-# def subir_drive():
-#     file_metadata = {'name': 'encrypted_file.txt'}
-#     media = MediaFileUpload('encrypted_file.txt', mimetype='text/plain')
-
-#     # Sube el archivo cifrado a Google Drive
-#     if drive_service:
-#         file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-#         return f'Archivo subido a Google Drive con ID: {file.get("id")}'
-
-#     return 'Error: No se pudo subir el archivo a Google Drive'
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-# ###################################################################
-# @app.route('/cifrar', methods=['POST'])
-# def cifrar():
-#     uploaded_file = request.files['file']
-    
-#     # Verifica si se cargó un archivo y si tiene una extensión .txt
-#     if uploaded_file.filename != '' and uploaded_file.filename.endswith('.txt'):
-#         file_contents = uploaded_file.read()
-#         encrypted_data = cipher_suite.encrypt(file_contents)
-
-#         # Guarda el archivo cifrado temporalmente
-#         with open('encrypted_file.txt', 'wb') as encrypted_file:
-#             encrypted_file.write(encrypted_data)
-        
-#         return render_template('resultado.html')
-#     else:
-#         return "Por favor, seleccione un archivo de texto (.txt)"
-
-# @app.route('/descifrar', methods=['POST'])
-# def descifrar():
-#     uploaded_file = request.files['file']
-    
-#     # Verifica si se cargó un archivo y si tiene una extensión .txt
-#     if uploaded_file.filename != '' and uploaded_file.filename.endswith('.txt'):
-#         file_contents = uploaded_file.read()
-#         decrypted_data = cipher_suite.decrypt(file_contents)
-
-#         # Guarda el archivo descifrado temporalmente
-#         with open('decrypted_file.txt', 'wb') as decrypted_file:
-#             decrypted_file.write(decrypted_data)
-        
-#         return send_file('decrypted_file.txt', as_attachment=True, download_name='decrypted_file.txt', mimetype='text/plain')
-#     else:
-#         return "Por favor, seleccione un archivo de texto (.txt)"
 from flask import Flask, render_template, request, send_file
 from cryptography.fernet import Fernet
 
@@ -229,10 +149,8 @@ def cifrar():
         with open('encrypted_file.txt', 'wb') as encrypted_file:
             encrypted_file.write(encrypted_data)
 
-        return send_file('encrypted_file.txt', as_attachment=True)
-
-    return "Error al cifrar el archivo"
-
+    return send_file('encrypted_file.txt', as_attachment=True)
+#######################################################
 @app.route('/descifrar', methods=['POST'])
 def descifrar():
     if 'file' not in request.files:
@@ -256,7 +174,7 @@ def descifrar():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
+    
 
 
 
