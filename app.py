@@ -178,6 +178,28 @@ def subir_archivo():
     archivo.save(ruta_destino)
 
     return f'Archivo subido con éxito a {ruta_destino}'
+#Prueba nueva
+# ...
+
+@app.route('/descargar_archivo', methods=['GET'])
+def descargar_archivo():
+    nombre_archivo = request.args.get('nombre_archivo')
+
+    if not nombre_archivo:
+        return 'Nombre de archivo no proporcionado'
+
+    # Construir la ruta completa del archivo subido
+    ruta_archivo = os.path.join('\\\\DESKTOP-2HO19U6\\Colombia is Back', nombre_archivo)
+
+    # Verificar si el archivo existe
+    if not os.path.exists(ruta_archivo):
+        return 'El archivo no existe'
+
+    # Descargar el archivo al cliente
+    return send_file(ruta_archivo, as_attachment=True)
+
+
+#Fin de la prueba
 
 if __name__ == '__main__':
     app.run(debug=True)
