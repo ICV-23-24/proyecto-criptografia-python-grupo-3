@@ -150,57 +150,57 @@ def get_data():
 from flask import Flask, render_template, request, send_file
 from cryptography.fernet import Fernet
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-import os
+# from google.auth.transport.requests import Request
+# from google.oauth2.credentials import Credentials
+# from google_auth_oauthlib.flow import InstalledAppFlow
+# from googleapiclient.discovery import build
+# import os
 
 
-# Las credenciales de la API de Google Drive se deben configurar previamente
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
-CLIENT_SECRET_FILE = 'client_secret.json'
-CLIENT_SECRET_FILE = os.environ.get('CLIENT_SECRET_FILE', 'client_secret.json')
-API_NAME = 'drive'
-API_VERSION = 'v3'
+# # Las credenciales de la API de Google Drive se deben configurar previamente
+# SCOPES = ['https://www.googleapis.com/auth/drive.file']
+# CLIENT_SECRET_FILE = 'client_secret.json'
+# CLIENT_SECRET_FILE = os.environ.get('CLIENT_SECRET_FILE', 'client_secret.json')
+# API_NAME = 'drive'
+# API_VERSION = 'v3'
 
-def get_drive_service():
-    creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json')
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-    return build(API_NAME, API_VERSION, credentials=creds)
+# def get_drive_service():
+#     creds = None
+#     if os.path.exists('token.json'):
+#         creds = Credentials.from_authorized_user_file('token.json')
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+#             creds = flow.run_local_server(port=0)
+#         with open('token.json', 'w') as token:
+#             token.write(creds.to_json())
+#     return build(API_NAME, API_VERSION, credentials=creds)
 
-drive_service = get_drive_service()
+# drive_service = get_drive_service()
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
-@app.route('/cifrar', methods=['POST'])
-def cifrar():
-    if 'file' not in request.files:
-        return "No se ha seleccionado ningún archivo"
+# @app.route('/cifrar', methods=['POST'])
+# def cifrar():
+#     if 'file' not in request.files:
+#         return "No se ha seleccionado ningún archivo"
 
-    file = request.files['file']
-    if file.filename == '':
-        return "No se ha seleccionado ningún archivo"
+#     file = request.files['file']
+#     if file.filename == '':
+#         return "No se ha seleccionado ningún archivo"
 
-    if file:
-        # Subir archivo a Google Drive
-        file_metadata = {'name': file.filename}
-        media = drive_service.files().create(body=file_metadata, media_body=file).execute()
+#     if file:
+#         # Subir archivo a Google Drive
+#         file_metadata = {'name': file.filename}
+#         media = drive_service.files().create(body=file_metadata, media_body=file).execute()
 
-        return f"Archivo cifrado subido a Google Drive: {media['id']}"
+#         return f"Archivo cifrado subido a Google Drive: {media['id']}"
 
-    return "Error al cifrar y subir el archivo a Google Drive"
+#     return "Error al cifrar y subir el archivo a Google Drive"
 app = Flask(__name__)
 
 # Genera una clave para el cifrado
