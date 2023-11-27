@@ -1,5 +1,7 @@
 from datetime import datetime
+import json
 from flask import Flask, render_template, request
+import requests
 import functions as f
 
 app = Flask(__name__)
@@ -26,10 +28,13 @@ def csimetrico():
 
     return render_template("csimetrico.html")
 
-# @app.route("/casimetrico/")
-# def casimetrico():
-#     return render_template("casimetrico.html")
+@app.route("/casimetrico/")
+def casimetrico():
+    return render_template("casimetrico.html")
 
+@app.route("/hola/")
+def hola():
+    return render_template("about.html")
 
 @app.route("/about/")
 def about():
@@ -43,6 +48,9 @@ def doc():
 def otro():
     return render_template("otro.html")
 
+@app.route("/hola2/")
+def hola2():
+    return render_template("formulario.html")
 
 
 @app.route("/hello/")
@@ -60,95 +68,27 @@ def get_data():
     return app.send_static_file("data.json")
 
 
-#########################################################################################################################
-# from flask import Flask, render_template, request, send_file
-# from cryptography.fernet import Fernet
-# import os
-# from googleapiclient.discovery import build
-# from googleapiclient.http import MediaFileUpload
-
-# app = Flask(__name__)
-
-# # Clave para el cifrado
-# key = Fernet.generate_key()
-# cipher_suite = Fernet(key)
-
-# # Credenciales de Google Drive API
-# # Reemplaza 'credentials.json' con el archivo de credenciales de tu aplicación en Google Cloud Platform
-# # Asegúrate de tener habilitada la API de Google Drive y descargado el archivo JSON de credenciales
-# # https://console.cloud.google.com/
-# creds = None
-# if os.path.exists('token.json'):
-#     creds = 'token.json'  # Reemplaza 'token.json' con tu token generado
-
-# drive_service = None
-# if creds:
-#     drive_service = build('drive', 'v3', credentials=creds)
-
-# @app.route('/')
-# def index():
-#     return render_template('formulario.html')
-
-# @app.route('/descargar')
-# def descargar():
-#     return send_file('encrypted_file.txt', as_attachment=True, download_name='encrypted_file.txt', mimetype='text/plain')
-
-# @app.route('/subir_drive')
-# def subir_drive():
-#     file_metadata = {'name': 'encrypted_file.txt'}
-#     media = MediaFileUpload('encrypted_file.txt', mimetype='text/plain')
-
-#     # Sube el archivo cifrado a Google Drive
-#     if drive_service:
-#         file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-#         return f'Archivo subido a Google Drive con ID: {file.get("id")}'
-
-#     return 'Error: No se pudo subir el archivo a Google Drive'
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-# ###################################################################
-# @app.route('/cifrar', methods=['POST'])
-# def cifrar():
-#     uploaded_file = request.files['file']
-    
-#     # Verifica si se cargó un archivo y si tiene una extensión .txt
-#     if uploaded_file.filename != '' and uploaded_file.filename.endswith('.txt'):
-#         file_contents = uploaded_file.read()
-#         encrypted_data = cipher_suite.encrypt(file_contents)
-
-#         # Guarda el archivo cifrado temporalmente
-#         with open('encrypted_file.txt', 'wb') as encrypted_file:
-#             encrypted_file.write(encrypted_data)
-        
-#         return render_template('resultado.html')
-#     else:
-#         return "Por favor, seleccione un archivo de texto (.txt)"
-
-# @app.route('/descifrar', methods=['POST'])
-# def descifrar():
-#     uploaded_file = request.files['file']
-    
-#     # Verifica si se cargó un archivo y si tiene una extensión .txt
-#     if uploaded_file.filename != '' and uploaded_file.filename.endswith('.txt'):
-#         file_contents = uploaded_file.read()
-#         decrypted_data = cipher_suite.decrypt(file_contents)
-
-#         # Guarda el archivo descifrado temporalmente
-#         with open('decrypted_file.txt', 'wb') as decrypted_file:
-#             decrypted_file.write(decrypted_data)
-        
-#         return send_file('decrypted_file.txt', as_attachment=True, download_name='decrypted_file.txt', mimetype='text/plain')
-#     else:
-#         return "Por favor, seleccione un archivo de texto (.txt)"
+#####################################################################################################################
 from flask import Flask, render_template, request, send_file
 from cryptography.fernet import Fernet
+import os
 
 app = Flask(__name__)
 
-# Genera una clave para el cifrado
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
+@app.route('/descargar_clave', methods=['GET'])
+def descargar_clave():
+    key = cargar_clave()
+    if key:
+        with open('key.key', 'wb') as key_file:
+            key_file.write(key)
+        return send_file('key.key', as_attachment=True)
+    return "No se ha generado ninguna clave aún."
+
+def cargar_clave():
+    if os.path.isfile('key.key'):
+        with open('key.key', 'rb') as key_file:
+            return key_file.read()
+    return None
 
 @app.route('/')
 def index():
@@ -156,49 +96,88 @@ def index():
 
 @app.route('/cifrar', methods=['POST'])
 def cifrar():
-    if 'file' not in request.files:
-        return "No se ha seleccionado ningún archivo"
+    if 'file' not in request.files or 'key' not in request.files:
+        return "No se ha seleccionado algún archivo o clave"
 
     file = request.files['file']
-    if file.filename == '':
-        return "No se ha seleccionado ningún archivo"
+    key_file = request.files['key']
+    if file.filename == '' or key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave"
 
-    if file:
-        # Lee el archivo y cifra su contenido
-        file_contents = file.read()
-        encrypted_data = cipher_suite.encrypt(file_contents)
+    file_contents = file.read()
+    key = key_file.read()
 
-        # Crea un nuevo archivo con el contenido cifrado
-        with open('encrypted_file.txt', 'wb') as encrypted_file:
-            encrypted_file.write(encrypted_data)
+    cipher_suite = Fernet(key)
+    encrypted_data = cipher_suite.encrypt(file_contents)
 
-        return send_file('encrypted_file.txt', as_attachment=True)
+    with open('encrypted_file.txt', 'wb') as encrypted_file:
+        encrypted_file.write(encrypted_data)
 
-    return "Error al cifrar el archivo"
-
+    return send_file('encrypted_file.txt', as_attachment=True)
+###########################################################
 @app.route('/descifrar', methods=['POST'])
 def descifrar():
-    if 'file' not in request.files:
-        return "No se ha seleccionado ningún archivo"
+    if 'file' not in request.files or 'key' not in request.files:
+        return "No se ha seleccionado algún archivo o clave"
 
     file = request.files['file']
-    if file.filename == '':
-        return "No se ha seleccionado ningún archivo"
+    key_file = request.files['key']
+    if file.filename == '' or key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave"
 
-    if file:
-        encrypted_data = file.read()
-        try:
-            decrypted_data = cipher_suite.decrypt(encrypted_data)
-            with open('decrypted_file.txt', 'wb') as decrypted_file:
-                decrypted_file.write(decrypted_data)
-            return send_file('decrypted_file.txt', as_attachment=True)
-        except Exception as e:
-            return f"Error al descifrar el archivo: {str(e)}"
+    encrypted_data = file.read()
+    key = key_file.read()
 
-    return "Error al descifrar el archivo"
+    cipher_suite = Fernet(key)
+    try:
+        decrypted_data = cipher_suite.decrypt(encrypted_data)
+        with open('decrypted_file.txt', 'wb') as decrypted_file:
+            decrypted_file.write(decrypted_data)
+        return send_file('decrypted_file.txt', as_attachment=True)
+    except Exception as e:
+        return f"Error al descifrar el archivo: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
 
+#Si lees esto has hecho un pull bien :D
 
+from datetime import datetime
+from flask import Flask, render_template, request, send_file
+from cryptography.fernet import Fernet
+import os
 
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+# Ruta para subir archivos
+@app.route('/subir_archivo', methods=['POST'])
+def subir_archivo():
+    if 'archivo' not in request.files:
+        return 'No se encontró el archivo en la solicitud'
+
+    archivo = request.files['archivo']
+
+    if archivo.filename == '':
+        return 'No se seleccionó ningún archivo'
+
+    # Ruta de destino en la red
+    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+
+    # Asegúrate de que la carpeta de destino exista
+    if not os.path.exists(carpeta_destino):
+        os.makedirs(carpeta_destino)
+
+    # Ruta completa del archivo en la carpeta de destino
+    ruta_destino = os.path.join(carpeta_destino, archivo.filename)
+
+    # Copiar el archivo a la carpeta de destino
+    archivo.save(ruta_destino)
+
+    return f'Archivo subido con éxito a {ruta_destino}'
+
+if __name__ == '__main__':
+    app.run(debug=True)

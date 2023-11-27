@@ -24,6 +24,12 @@
         <input type="file" name="key" accept=".key"> <!-- Nuevo campo para cargar la clave -->
         <button type="submit">Descifrar archivo</button>
     </form>
+
+    <h2>Subir Archivo</h2>
+    <form action="/subir_archivo" method="post" enctype="multipart/form-data">
+        <input type="file" name="archivo" accept=".txt, .pdf, .png, .jpg, .jpeg">
+        <button type="submit">Subir Archivo</button>
+    </form>
 </body>
 
 </html>
