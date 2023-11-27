@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cifrador y Descifrador de archivos</title>
+</head>
+
+<body>
+    <h1>Cifrador y Descifrador de archivos</h1>
+    <form action="/descargar_clave" method="get">
+        <button type="submit">Descargar Clave</button>
+    </form>
+    <h2>Cifrar archivo</h2>
+    <form action="/cifrar" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".txt">
+        <input type="file" name="key" accept=".key"> <!-- Nuevo campo para cargar la clave -->
+        <button type="submit">Cifrar archivo</button>
+    </form>
+
+    <h2>Descifrar archivo</h2>
+    <form action="/descifrar" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".txt">
+        <input type="file" name="key" accept=".key"> <!-- Nuevo campo para cargar la clave -->
+        <button type="submit">Descifrar archivo</button>
+    </form>
+</body>
+
+</html>
