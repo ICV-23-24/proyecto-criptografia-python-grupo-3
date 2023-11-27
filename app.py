@@ -70,7 +70,9 @@ def get_data():
 from flask import Flask, render_template, request, send_file
 from cryptography.fernet import Fernet
 import os
-
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import padding
 app = Flask(__name__)
 
 @app.route('/descargar_clave', methods=['GET'])
@@ -94,26 +96,36 @@ def index():
 
 @app.route('/cifrar', methods=['POST'])
 def cifrar():
-    if 'file' not in request.files or 'key' not in request.files:
-        return "No se ha seleccionado algún archivo o clave"
+    if 'file' not in request.files or 'algorithm' not in request.form:
+        return "Falta seleccionar algún archivo o algoritmo"
 
     file = request.files['file']
-    key_file = request.files['key']
-    if file.filename == '' or key_file.filename == '':
-        return "No se ha seleccionado algún archivo o clave"
+    algorithm = request.form['algorithm']
+
+    if file.filename == '' or algorithm not in ['AES', '3DES']:
+        return "Falta seleccionar algún archivo o algoritmo válido"
 
     file_contents = file.read()
-    key = key_file.read()
 
-    cipher_suite = Fernet(key)
-    encrypted_data = cipher_suite.encrypt(file_contents)
+    # Generar clave AES de 128 bits (16 bytes)
+    key = os.urandom(16)
+
+    if algorithm == 'AES':
+        cipher = Cipher(algorithms.AES(key), modes.CBC(os.urandom(16)), backend=default_backend())
+    else:
+        cipher = Cipher(algorithms.TripleDES(key), modes.CBC(os.urandom(8)), backend=default_backend())
+
+    encryptor = cipher.encryptor()
+    padder = padding.PKCS7(algorithms.AES.block_size).padder()
+    padded_data = padder.update(file_contents) + padder.finalize()
+
+    encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
 
     with open('encrypted_file.txt', 'wb') as encrypted_file:
         encrypted_file.write(encrypted_data)
 
     return send_file('encrypted_file.txt', as_attachment=True)
 ###########################################################
-@app.route('/descifrar', methods=['POST'])
 def descifrar():
     if 'file' not in request.files or 'key' not in request.files:
         return "No se ha seleccionado algún archivo o clave"
@@ -138,7 +150,7 @@ def descifrar():
 if __name__ == '__main__':
     app.run(debug=True)
 
-#Si lees esto has hecho un pull bien :D
+#Si lees esto has hecho un pull bien
 
 
 
