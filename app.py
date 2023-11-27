@@ -112,7 +112,7 @@ def cifrar():
         encrypted_file.write(encrypted_data)
 
     return send_file('encrypted_file.txt', as_attachment=True)
-#######################################################
+###########################################################
 @app.route('/descifrar', methods=['POST'])
 def descifrar():
     if 'file' not in request.files or 'key' not in request.files:
