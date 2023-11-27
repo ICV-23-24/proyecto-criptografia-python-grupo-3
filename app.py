@@ -149,12 +149,24 @@ def get_data():
 #         return "Por favor, seleccione un archivo de texto (.txt)"
 from flask import Flask, render_template, request, send_file
 from cryptography.fernet import Fernet
+import os
 
 app = Flask(__name__)
 
-# Genera una clave para el cifrado
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
+@app.route('/descargar_clave', methods=['GET'])
+def descargar_clave():
+    key = cargar_clave()
+    if key:
+        with open('key.key', 'wb') as key_file:
+            key_file.write(key)
+        return send_file('key.key', as_attachment=True)
+    return "No se ha generado ninguna clave aún."
+
+def cargar_clave():
+    if os.path.isfile('key.key'):
+        with open('key.key', 'rb') as key_file:
+            return key_file.read()
+    return None
 
 @app.route('/')
 def index():
@@ -162,49 +174,50 @@ def index():
 
 @app.route('/cifrar', methods=['POST'])
 def cifrar():
-    if 'file' not in request.files:
-        return "No se ha seleccionado ningún archivo"
+    if 'file' not in request.files or 'key' not in request.files:
+        return "No se ha seleccionado algún archivo o clave"
 
     file = request.files['file']
-    if file.filename == '':
-        return "No se ha seleccionado ningún archivo"
+    key_file = request.files['key']
+    if file.filename == '' or key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave"
 
-    if file:
-        # Lee el archivo y cifra su contenido
-        file_contents = file.read()
-        encrypted_data = cipher_suite.encrypt(file_contents)
+    file_contents = file.read()
+    key = key_file.read()
 
-        # Crea un nuevo archivo con el contenido cifrado
-        with open('encrypted_file.txt', 'wb') as encrypted_file:
-            encrypted_file.write(encrypted_data)
+    cipher_suite = Fernet(key)
+    encrypted_data = cipher_suite.encrypt(file_contents)
 
-        return send_file('encrypted_file.txt', as_attachment=True)
+    with open('encrypted_file.txt', 'wb') as encrypted_file:
+        encrypted_file.write(encrypted_data)
 
-    return "Error al cifrar el archivo"
-
+    return send_file('encrypted_file.txt', as_attachment=True)
+#######################################################
 @app.route('/descifrar', methods=['POST'])
 def descifrar():
-    if 'file' not in request.files:
-        return "No se ha seleccionado ningún archivo"
+    if 'file' not in request.files or 'key' not in request.files:
+        return "No se ha seleccionado algún archivo o clave"
 
     file = request.files['file']
-    if file.filename == '':
-        return "No se ha seleccionado ningún archivo"
+    key_file = request.files['key']
+    if file.filename == '' or key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave"
 
-    if file:
-        encrypted_data = file.read()
-        try:
-            decrypted_data = cipher_suite.decrypt(encrypted_data)
-            with open('decrypted_file.txt', 'wb') as decrypted_file:
-                decrypted_file.write(decrypted_data)
-            return send_file('decrypted_file.txt', as_attachment=True)
-        except Exception as e:
-            return f"Error al descifrar el archivo: {str(e)}"
+    encrypted_data = file.read()
+    key = key_file.read()
 
-    return "Error al descifrar el archivo"
+    cipher_suite = Fernet(key)
+    try:
+        decrypted_data = cipher_suite.decrypt(encrypted_data)
+        with open('decrypted_file.txt', 'wb') as decrypted_file:
+            decrypted_file.write(decrypted_data)
+        return send_file('decrypted_file.txt', as_attachment=True)
+    except Exception as e:
+        return f"Error al descifrar el archivo: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
 
 
 
