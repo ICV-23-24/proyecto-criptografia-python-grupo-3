@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, redirect, url_for
 from cryptography.fernet import Fernet
 from werkzeug.utils import secure_filename
 import os
@@ -155,6 +155,4 @@ def descargar_archivo():
     nombre_archivo = request.args.get('nombre_archivo')
 
     if not nombre_archivo:
-        return 'Nombre de archivo no proporcionado'
-
-   
+        return
