@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -39,6 +39,65 @@
         <label for="file">Seleccionar el archivo a descifrar :</label>
         <input type="file" name="file" accept=".txt">
         <input type="file" name="key" accept=".key"> 
+        <button type="submit">Descifrar archivo</button>
+    </form>
+</body>
+
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cifrador y Descifrador de archivos</title>
+</head>
+
+<body>
+    <h1>Cifrador y Descifrador de archivos</h1>
+    
+    <h2>Cifrar archivo con opción de guardar en local o en drive</h2>
+    <form action="/cifrar" method="post" enctype="multipart/form-data">
+        <label for="file">Seleccionar el archivo a cifrar :</label>
+        <input type="file" name="file" id="file" accept=".txt">
+        <br>
+
+        <label for="key">Seleccionar la clave para realizar el cifrado :</label>
+        <input type="file" name="key" id="key" accept=".key">
+        <br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+
+        <button type="submit">Cifrar archivo</button>
+    </form>
+
+    <h2>Descargar Archivo</h2>
+    <form action="/descargar_archivo" method="get">
+        <label for="nombre_archivo">Nombre del archivo a descargar:</label>
+        <input type="text" name="nombre_archivo" id="nombre_archivo" placeholder="Nombre del archivo">
+        <button type="submit">Descargar Archivo</button>
+    </form>
+
+    <h2>Descifrar archivo</h2>
+    <form action="/descifrar" method="post" enctype="multipart/form-data">
+        <label for="file_descifrar">Seleccionar el archivo a descifrar :</label>
+        <input type="file" name="file" accept=".txt">
+        <br>
+
+        <label for="key_descifrar">Seleccionar la clave para realizar el descifrado :</label>
+        <input type="file" name="key" accept=".key"> 
+        <br>
+
+        <label for="save_option_descifrar">Guardar en:</label>
+        <select name="save_option" id="save_option_descifrar">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+
         <button type="submit">Descifrar archivo</button>
     </form>
 </body>

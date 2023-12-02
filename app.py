@@ -84,20 +84,42 @@ def descifrar():
     if 'file' not in request.files or 'key' not in request.files:
         return "No se ha seleccionado algún archivo o clave"
 
-    file = request.files['file']
-    key_file = request.files['key']
-
-    if file.filename == '' or key_file.filename == '':
-        return "No se ha seleccionado algún archivo o clave"
-
-    encrypted_data = file.read()
-    key = key_file.read()
-
     try:
+        file = request.files['file']
+        key_file = request.files['key']
+
+        if file.filename == '' or key_file.filename == '':
+            return "No se ha seleccionado algún archivo o clave"
+
+        encrypted_data = file.read()
+        key = key_file.read()
+
+        # Obtén la opción de guardado del formulario
+        save_option = request.form.get('save_option')
+
         decrypted_data = descifrar_datos(encrypted_data, key)
-        with open('decrypted_file.txt', 'wb') as decrypted_file:
-            decrypted_file.write(decrypted_data)
-        return send_file('decrypted_file.txt', as_attachment=True)
+
+        if save_option == 'local':
+            # Guardar localmente
+            with open('decrypted_file.txt', 'wb') as decrypted_file:
+                decrypted_file.write(decrypted_data)
+            return send_file('decrypted_file.txt', as_attachment=True)
+        elif save_option == 'destino':
+            # Guardar en la carpeta de destino
+            carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+            if not os.path.exists(carpeta_destino):
+                os.makedirs(carpeta_destino)
+
+            # Utilizar el nombre del archivo descifrado para construir la ruta de destino
+            nombre_archivo_descifrado = secure_filename(file.filename.replace('_cifrado.txt', '_descifrado.txt'))
+            ruta_destino = os.path.join(carpeta_destino, nombre_archivo_descifrado)
+
+            with open(ruta_destino, 'wb') as decrypted_file:
+                decrypted_file.write(decrypted_data)
+            return f'Archivo descifrado guardado con éxito en {ruta_destino}'
+
+        return "Opción de guardado no válida"
+
     except Exception as e:
         return f"Error al descifrar el archivo: {str(e)}"
 
@@ -135,15 +157,4 @@ def descargar_archivo():
     if not nombre_archivo:
         return 'Nombre de archivo no proporcionado'
 
-    # Construir la ruta completa del archivo en la carpeta compartida
-    ruta_archivo = os.path.join('\\\\DESKTOP-2HO19U6\\Colombia is Back', nombre_archivo)
-
-    # Verificar si el archivo existe
-    if not os.path.exists(ruta_archivo):
-        return 'El archivo no existe'
-
-    # Descargar el archivo al cliente
-    return send_file(ruta_archivo, as_attachment=True)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+   
