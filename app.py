@@ -10,19 +10,159 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from flask import Flask, render_template, send_from_directory
 from cryptography.hazmat.primitives import serialization
 from flask import Flask, render_template, request, send_file, render_template_string
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.fernet import Fernet
 
 app = Flask(__name__)
 public_keys = []  # Lista para almacenar los nombres de las claves públicas
 
-@app.route('/listar_claves_publicas')
-def listar_claves_publicas():
-    files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
-    public_keys.clear()  # Limpiar la lista de claves públicas antes de añadir nombres nuevos
-    for file in files:
-        if file.endswith('.pem') and 'public' in file.lower():  # Filtrar por archivos .pem y que contengan 'public' en el nombre
-            public_keys.append(file)
-    print(public_keys)  # Agregar esta línea para imprimir los nombres de los archivos
-    return render_template_string(open('templates/index.html', 'r', encoding='utf-8').read(), public_keys=public_keys)
+
+
+
+# Ruta para generar y descargar las claves pública y privada
+@app.route('/generate_and_download_keys', methods=['GET'])
+def generate_and_download_keys():
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+
+    # Generar la clave privada en formato PEM
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+
+    # Generar la clave pública en formato PEM
+    public_key_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+
+    # Guardar la clave privada en un archivo
+    with open('private_key.pem', 'w') as private_key_file:
+        private_key_file.write(private_key_pem)
+
+    # Guardar la clave pública en un archivo
+    with open('public_key.pem', 'w') as public_key_file:
+        public_key_file.write(public_key_pem)
+
+    # Descargar la clave privada
+    @app.route('/download_private_key')
+    def download_private_key():
+        return send_from_directory(os.getcwd(), 'private_key.pem', as_attachment=True)
+
+    # Descargar la clave pública
+    @app.route('/download_public_key')
+    def download_public_key():
+        return send_from_directory(os.getcwd(), 'public_key.pem', as_attachment=True)
+
+
+# Ruta principal
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/get_private_key', methods=['GET'])
+def get_private_key():
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+
+    filename = 'private_key.pem'
+    with open(filename, 'w') as file:
+        file.write(private_key_pem)
+
+    return send_from_directory(os.getcwd(), filename, as_attachment=True)
+
+
+
+@app.route('/descifrar_con_clave_privada', methods=['POST'])
+def descifrar_con_clave_privada():
+    if 'file' not in request.files or 'private_key_file' not in request.files:
+        return "No se ha seleccionado algún archivo o clave privada"
+
+    file = request.files['file']
+    private_key_file = request.files['private_key_file']
+
+    if file.filename == '' or private_key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave privada"
+
+    encrypted_data = file.read()
+    private_key_pem = private_key_file.read()
+
+    private_key = serialization.load_pem_private_key(private_key_pem, password=None, backend=default_backend())
+
+    try:
+        # Descifrar utilizando la clave privada
+        decrypted_data = private_key.decrypt(
+            encrypted_data,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        # Guardar el archivo descifrado localmente
+        with open('decrypted_file.txt', 'wb') as decrypted_file:
+            decrypted_file.write(decrypted_data)
+
+        return send_file('decrypted_file.txt', as_attachment=True)
+
+    except Exception as e:
+        return f"Error al descifrar el archivo: {str(e)}"
+
+
+
+
+
+
+@app.route('/cifrar_con_clave_publica', methods=['POST'])
+def cifrar_con_clave_publica():
+    if 'file' not in request.files or 'public_key_file' not in request.files:
+        return "No se ha seleccionado algún archivo o clave pública"
+
+    file = request.files['file']
+    public_key_file = request.files['public_key_file']
+
+    if file.filename == '' or public_key_file.filename == '':
+        return "No se ha seleccionado algún archivo o clave pública"
+
+    file_contents = file.read()
+    public_key_pem = public_key_file.read()
+
+    public_key = serialization.load_pem_public_key(public_key_pem, backend=default_backend())
+
+    # Cifrar usando la clave pública
+    try:
+        encrypted_data = public_key.encrypt(
+            file_contents,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        # Guardar el archivo cifrado localmente
+        with open('encrypted_file.txt', 'wb') as encrypted_file:
+            encrypted_file.write(encrypted_data)
+
+        return send_file('encrypted_file.txt', as_attachment=True)
+
+    except Exception as e:
+        return f"Error al cifrar el archivo: {str(e)}"
 
 @app.route('/upload_public_key', methods=['POST'])
 def upload_public_key():
@@ -39,7 +179,6 @@ def upload_public_key():
     else:
         return "No se ha seleccionado ningún archivo"
 
-@app.route('/')
 @app.route('/generate_keys')
 def generate_keys():
     private_key = rsa.generate_private_key(
@@ -122,10 +261,7 @@ def descargar_clave():
         return send_file('key.key', as_attachment=True)
     return "No se ha generado ninguna clave aún."
 
-# Ruta principal
-@app.route('/')
-def index():
-    return render_template('index.html')
+
 
 # Ruta para cifrar archivos
 @app.route('/cifrar', methods=['POST'])
@@ -247,3 +383,14 @@ def descargar_archivo():
 
     if not nombre_archivo:
         return
+
+@app.route('/listar_claves_publicas')
+def listar_claves_publicas():
+    files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
+    public_keys.clear()  # Limpiar la lista de claves públicas antes de añadir nombres nuevos
+    for file in files:
+        if file.endswith('.pem') and 'public' in file.lower():  # Filtrar por archivos .pem y que contengan 'public' en el nombre
+            public_keys.append(file)
+    print(public_keys)  # Agregar esta línea para imprimir los nombres de los archivos
+    return render_template('index.html', public_keys=public_keys)
+
