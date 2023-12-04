@@ -8,22 +8,124 @@
 
 <body>
     <h1>Cifrador y Descifrador de archivos</h1>
+
+    <h2>Cifrar archivo con opción de guardar en local o en drive</h2>
+    <form action="/cifrar" method="post" enctype="multipart/form-data">
+        <label for="file">Seleccionar el archivo a cifrar :</label>
+        <input type="file" name="file" id="file" accept=".txt">
+        <br>
+
+        <label for="key">Seleccionar la clave para realizar el cifrado :</label>
+        <input type="file" name="key" id="key" accept=".key">
+        <br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+
+        <button type="submit">Cifrar archivo</button>
+    </form>
+
+    <h2>Descargar clave y subir a Drive</h2>
     <form action="/descargar_clave" method="get">
         <button type="submit">Descargar Clave</button>
     </form>
-    <h2>Cifrar archivo</h2>
-    <form action="/cifrar" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".txt">
-        <input type="file" name="key" accept=".key"> <!-- Nuevo campo para cargar la clave -->
-        <button type="submit">Cifrar archivo</button>
+
+    <form action="/subir_clave" method="post" enctype="multipart/form-data">
+        <label for="clave">Seleccionar la clave para subir a Drive:</label>
+        <input type="file" name="clave" id="clave" accept=".key">
+        <button type="submit">Subir Clave a Drive</button>
     </form>
 
     <h2>Descifrar archivo</h2>
     <form action="/descifrar" method="post" enctype="multipart/form-data">
+        <label for="file_descifrar">Seleccionar el archivo a descifrar :</label>
         <input type="file" name="file" accept=".txt">
-        <input type="file" name="key" accept=".key"> <!-- Nuevo campo para cargar la clave -->
+        <br>
+
+        <label for="key_descifrar">Seleccionar la clave para realizar el descifrado :</label>
+        <input type="file" name="key" accept=".key"> 
+        <br>
+
+        <label for="save_option_descifrar">Guardar en:</label>
+        <select name="save_option" id="save_option_descifrar">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+
         <button type="submit">Descifrar archivo</button>
     </form>
-</body>
+    <hr>
+    <h1>Cifrado Asimétrico xd</h1>
+    <h2>Generar y descargar claves</h2>
+    <form action="/generate_and_download_keys" method="get">
+        <button type="submit" formaction="/download_private_key">Descargar Clave Privada</button>
+        <button type="submit" formaction="/download_public_key">Descargar Clave Pública</button>
+    </form>
+    <h2>Cifrar archivo con clave pública</h2>
+<form action="/cifrar_con_clave_publica" method="post" enctype="multipart/form-data">
+    <label for="file">Seleccionar el archivo a cifrar:</label>
+    <input type="file" name="file" id="file" accept=".txt">
+    <br>
 
+    <label for="public_key_file">Seleccionar la clave pública:</label>
+    <input type="file" name="public_key_file" id="public_key_file" accept=".pem">
+    <br>
+
+    <button type="submit">Cifrar archivo con clave pública</button>
+</form>
+
+
+<h2>Descifrar archivo con clave privada</h2>
+<form action="/descifrar_con_clave_privada" method="post" enctype="multipart/form-data">
+    <label for="file_to_decrypt">Seleccionar el archivo cifrado:</label>
+    <input type="file" name="file" id="file_to_decrypt" accept=".txt">
+    <br>
+
+    <label for="private_key_file">Seleccionar la clave privada:</label>
+    <input type="file" name="private_key_file" id="private_key_file" accept=".pem">
+    <br>
+
+    <button type="submit">Descifrar archivo con clave privada</button>
+</form>
+
+
+
+
+
+
+
+ <hr>
+    <h2>Generar Claves</h2>
+    <form action="/generate_keys" method="get">
+        <button type="submit">Generar Claves</button>
+    </form>
+
+    <h2>Descargar Claves</h2>
+    <a href="/download_public_key" download="public_key.pem">
+        <button>Descargar Clave Pública</button>
+    </a>
+    
+    <h2>Subir Clave Pública</h2>
+    <form action="/upload_public_key" method="post" enctype="multipart/form-data">
+        <input type="file" name="public_key_file">
+        <button type="submit">Subir Clave Pública</button>
+    </form>
+
+    
+    <h2>Listar Claves Públicas</h2>
+    <form action="/listar_claves_publicas" method="get">
+        <button type="submit">Listar Claves Públicas</button>
+    </form>
+
+    <h2>Claves Públicas Subidas</h2>
+    <ul>
+        {% for public_key in public_keys %}
+            <li>{{ public_key }}</li>
+        {% endfor %}
+    </ul>
+
+</body>
 </html>
