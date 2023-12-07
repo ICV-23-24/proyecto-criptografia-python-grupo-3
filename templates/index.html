@@ -1,23 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<style>
+.simetrico{
+    display: flex;
+}
+.simetricoaes, .simetricodes{
+    width:50%;
+}
+</style>
 <head>
     <meta charset="UTF-8">
     <title>Cifrador y Descifrador de archivos</title>
 </head>
 
 <body>
-    <h1>Cifrador y Descifrador de archivos</h1>
+    <div class="simetrico">
+        <div class="simetricoaes">
 
-    <h2>Cifrar archivo con opción de guardar en local o en drive</h2>
-    <form action="/cifrar" method="post" enctype="multipart/form-data">
-        <label for="file">Seleccionar el archivo a cifrar :</label>
-        <input type="file" name="file" id="file" accept=".txt">
-        <br>
+    <h1>AES Encryption</h1>
+    
+    <!-- Formulario para generar la clave -->
+    <form action="/generate-key" method="GET">
+        <button type="submit">Generar Clave</button>
+    </form>
 
-        <label for="key">Seleccionar la clave para realizar el cifrado :</label>
-        <input type="file" name="key" id="key" accept=".key">
-        <br>
+    <!-- Formulario para cifrar archivo -->
+    <form action="/encrypt-file" method="POST" enctype="multipart/form-data">
+        <label for="key">Seleccionar Clave:</label>
+        <input type="file" id="key" name="key" required><br><br>
+
+        <label for="file">Seleccionar Archivo a Cifrar:</label>
+        <input type="file" id="file" name="file" required><br><br>
 
         <label for="save_option">Guardar en:</label>
         <select name="save_option" id="save_option">
@@ -25,40 +38,84 @@
             <option value="destino">Drive</option>
         </select>
 
-        <button type="submit">Cifrar archivo</button>
+        <button type="submit">Cifrar Archivo</button>
     </form>
 
-    <h2>Descargar clave y subir a Drive</h2>
-    <form action="/descargar_clave" method="get">
-        <button type="submit">Descargar Clave</button>
+    <!-- Formulario para descifrar archivo -->
+    <form action="/decrypt-file" method="POST" enctype="multipart/form-data">
+        <label for="key-decrypt">Seleccionar Clave:</label>
+        <input type="file" id="key-decrypt" name="key" required><br><br>
+
+        <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
+        <input type="file" id="file-decrypt" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+        <button type="submit">Descifrar Archivo</button>
+    </form>
+</div>
+<div class="simetricodes">
+
+    <h1>Algoritmo DES</h1>
+        
+    <!-- Formulario para generar la clave -->
+    <form action="/generate-keydes" method="GET">
+        <button type="submit">Generar Clave</button>
     </form>
 
+    <!-- Formulario para cifrar archivo -->
+    <form action="/encrypt-filedes" method="POST" enctype="multipart/form-data">
+        <label for="key">Seleccionar Clave:</label>
+        <input type="file" id="key" name="key" required><br><br>
+
+        <label for="file">Seleccionar Archivo a Cifrar:</label>
+        <input type="file" id="file" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+        <button type="submit">Cifrar Archivo</button>
+    </form>
+
+    <!-- Formulario para descifrar archivo -->
+    <form action="/decrypt-filedes" method="POST" enctype="multipart/form-data">
+        <label for="key-decrypt">Seleccionar Clave:</label>
+        <input type="file" id="key-decrypt" name="key" required><br><br>
+
+        <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
+        <input type="file" id="file-decrypt" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+        <button type="submit">Descifrar Archivo</button>
+    </form>
+
+</div>
+</div>   
+    <h2>Subir clave al NAS</h2>
     <form action="/subir_clave" method="post" enctype="multipart/form-data">
         <label for="clave">Seleccionar la clave para subir a Drive:</label>
         <input type="file" name="clave" id="clave" accept=".key">
         <button type="submit">Subir Clave a Drive</button>
     </form>
 
-    <h2>Descifrar archivo</h2>
-    <form action="/descifrar" method="post" enctype="multipart/form-data">
-        <label for="file_descifrar">Seleccionar el archivo a descifrar :</label>
-        <input type="file" name="file" accept=".txt">
-        <br>
-
-        <label for="key_descifrar">Seleccionar la clave para realizar el descifrado :</label>
-        <input type="file" name="key" accept=".key"> 
-        <br>
-
-        <label for="save_option_descifrar">Guardar en:</label>
-        <select name="save_option" id="save_option_descifrar">
-            <option value="local">Local</option>
-            <option value="destino">Drive</option>
-        </select>
-
-        <button type="submit">Descifrar archivo</button>
-    </form>
     <hr>
-    <h1>Cifrado Asimétrico xd</h1>
+
+
+
+    <h1>Cifrado Asimétrico</h1>
+    <h2>Generar Claves</h2>
+    <form action="/generate_keys" method="get">
+        <button type="submit">Generar Claves</button>
+    </form>
     <h2>Generar y descargar claves</h2>
     <form action="/generate_and_download_keys" method="get">
         <button type="submit" formaction="/download_private_key">Descargar Clave Privada</button>
@@ -90,18 +147,8 @@
 
     <button type="submit">Descifrar archivo con clave privada</button>
 </form>
-
-
-
-
-
-
-
- <hr>
-    <h2>Generar Claves</h2>
-    <form action="/generate_keys" method="get">
-        <button type="submit">Generar Claves</button>
-    </form>
+<hr>
+    
 
     <h2>Descargar Claves</h2>
     <a href="/download_public_key" download="public_key.pem">

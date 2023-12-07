@@ -16,11 +16,179 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.fernet import Fernet
 
+from flask import Flask, render_template, request, send_file
+from Crypto.Cipher import AES, DES
+from Crypto.Random import get_random_bytes
+
 app = Flask(__name__)
 public_keys = []  # Lista para almacenar los nombres de las claves públicas
 
+@app.route('/subir_clave', methods=['POST'])
+def subir_clave():
+    clave_file = request.files['clave']
+
+    if clave_file.filename == '':
+        return "No se ha seleccionado ningún archivo de clave"
+
+    # Ruta de destino para la clave en la carpeta compartida
+    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+    if not os.path.exists(carpeta_destino):
+        os.makedirs(carpeta_destino)
+
+    # Guardar la clave en la carpeta compartida
+    ruta_destino_clave = os.path.join(carpeta_destino, clave_file.filename)
+    clave_file.save(ruta_destino_clave)
+
+    return f'Clave guardada con éxito en {ruta_destino_clave}'
+
+# Funciones para AES
+def encrypt_file_aes(plaintext, key):
+    cipher = AES.new(key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext)
+    return cipher.nonce + tag + ciphertext
+
+def decrypt_file_aes(ciphertext, key):
+    nonce = ciphertext[:16]
+    tag = ciphertext[16:32]
+    encrypted_data = ciphertext[32:]
+    cipher = AES.new(key, AES.MODE_EAX, nonce)
+    plaintext = cipher.decrypt_and_verify(encrypted_data, tag)
+    return plaintext
+
+@app.route('/generate-key', methods=['GET'])
+def generate_key_aes():
+    key = get_random_bytes(16)
+    with open("encryption_key_aes.key", "wb") as key_file:
+        key_file.write(key)
+    return send_file("encryption_key_aes.key", as_attachment=True)
+
+@app.route('/encrypt-file', methods=['POST'])
+def encrypt_file_route_aes():
+    key_file = request.files['key']
+    key = key_file.read()
+    plaintext_file = request.files['file']
+    plaintext = plaintext_file.read()
+
+    ciphertext = encrypt_file_aes(plaintext, key)
+
+    # Guardar localmente o en una ruta
+    save_option = request.form.get('save_option')
+
+    if save_option == 'local':
+        with open("encrypted_file_aes.txt", "wb") as encrypted_file:
+            encrypted_file.write(ciphertext)
+        return send_file("encrypted_file_aes.txt", as_attachment=True)
+    elif save_option == 'destino':
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        if not os.path.exists(carpeta_destino):
+            os.makedirs(carpeta_destino)
+
+        nombre_archivo_cifrado = secure_filename(plaintext_file.filename)
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado.txt')
+
+        with open(ruta_destino, 'wb') as encrypted_file:
+            encrypted_file.write(ciphertext)
+        return f'Archivo cifrado guardado con éxito en {ruta_destino}'
+
+    return "Opción de guardado no válida"
 
 
+@app.route('/decrypt-file', methods=['POST'])
+def decrypt_file_route_aes():
+    key_file = request.files['key']
+    key = key_file.read()
+    ciphertext_file = request.files['file']
+    ciphertext = ciphertext_file.read()
+
+    plaintext = decrypt_file_aes(ciphertext, key)
+
+    # Guardar el archivo descifrado
+    save_option = request.form.get('save_option')
+
+    if save_option == 'local':
+        with open("decrypted_file_aes.txt", "wb") as decrypted_file:
+            decrypted_file.write(plaintext)
+        return send_file("decrypted_file_aes.txt", as_attachment=True)
+    elif save_option == 'destino':
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        if not os.path.exists(carpeta_destino):
+            os.makedirs(carpeta_destino)
+
+        nombre_archivo_descifrado = secure_filename(ciphertext_file.filename)
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_descifrado + '_descifrado.txt')
+
+        with open(ruta_destino, 'wb') as decrypted_file:
+            decrypted_file.write(plaintext)
+        return f'Archivo descifrado guardado con éxito en {ruta_destino}'
+
+    return "Opción de guardado no válida"
+
+
+# Funciones para DES
+def encrypt_file_des(plaintext, key):
+    cipher = DES.new(key, DES.MODE_ECB)
+    while len(plaintext) % 8 != 0:
+        plaintext += b' '
+    return cipher.encrypt(plaintext)
+
+def decrypt_file_des(ciphertext, key):
+    cipher = DES.new(key, DES.MODE_ECB)
+    return cipher.decrypt(ciphertext)
+
+@app.route('/generate-keydes', methods=['GET'])
+def generate_key_des():
+    key = get_random_bytes(8)
+    with open("encryption_key_des.key", "wb") as key_file:
+        key_file.write(key)
+    return send_file("encryption_key_des.key", as_attachment=True)
+
+@app.route('/encrypt-filedes', methods=['POST'])
+def encrypt_file_route_des():
+    key_file = request.files['key']
+    key = key_file.read()
+    plaintext_file = request.files['file']
+    plaintext = plaintext_file.read()
+
+    ciphertext = encrypt_file_des(plaintext, key)  # Debes tener tu propia implementación de cifrado DES
+
+    # Guardar el archivo cifrado DES
+    save_option = request.form.get('save_option')
+
+    if save_option == 'local':
+        with open("encrypted_file_des.txt", "wb") as encrypted_file:
+            encrypted_file.write(ciphertext)
+        return send_file("encrypted_file_des.txt", as_attachment=True)
+    elif save_option == 'destino':
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        if not os.path.exists(carpeta_destino):
+            os.makedirs(carpeta_destino)
+
+        nombre_archivo_cifrado = secure_filename(plaintext_file.filename)
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado_des.txt')
+
+        with open(ruta_destino, 'wb') as encrypted_file:
+            encrypted_file.write(ciphertext)
+        return f'Archivo cifrado DES guardado con éxito en {ruta_destino}'
+
+    return "Opción de guardado no válida"
+
+
+
+
+@app.route('/decrypt-filedes', methods=['POST'])
+def decrypt_file_route_des():
+    key_file = request.files['key']
+    key = key_file.read()
+    ciphertext_file = request.files['file']
+    ciphertext = ciphertext_file.read()
+
+    plaintext = decrypt_file_des(ciphertext, key)
+
+    with open("decrypted_file_des.txt", "wb") as decrypted_file:
+        decrypted_file.write(plaintext)
+
+    return send_file("decrypted_file_des.txt", as_attachment=True)
+#############################################################################################
 
 # Ruta para generar y descargar las claves pública y privada
 @app.route('/generate_and_download_keys', methods=['GET'])
@@ -252,103 +420,15 @@ def descifrar_datos(encrypted_data, key):
         raise Exception(f"Error al descifrar los datos: {str(e)}")
 
 # Ruta para descargar la clave
-@app.route('/descargar_clave', methods=['GET'])
-def descargar_clave():
-    key = cargar_clave()
-    if key:
-        with open('key.key', 'wb') as key_file:
-            key_file.write(key)
-        return send_file('key.key', as_attachment=True)
-    return "No se ha generado ninguna clave aún."
+# @app.route('/descargar_clave', methods=['GET'])
+# def descargar_clave():
+#     key = cargar_clave()
+#     if key:
+#         with open('key.key', 'wb') as key_file:
+#             key_file.write(key)
+#         return send_file('key.key', as_attachment=True)
+#     return "No se ha generado ninguna clave aún."
 
-
-
-# Ruta para cifrar archivos
-@app.route('/cifrar', methods=['POST'])
-def cifrar():
-    if 'file' not in request.files or 'key' not in request.files:
-        return "No se ha seleccionado algún archivo o clave"
-
-    file = request.files['file']
-    key_file = request.files['key']
-
-    if file.filename == '' or key_file.filename == '':
-        return "No se ha seleccionado algún archivo o clave"
-
-    file_contents = file.read()
-    key = key_file.read()
-
-    cipher_suite = Fernet(key)
-    encrypted_data = cipher_suite.encrypt(file_contents)
-
-    # Obtén la opción de guardado del formulario
-    save_option = request.form.get('save_option')
-
-    if save_option == 'local':
-        # Guardar localmente
-        with open('encrypted_file.txt', 'wb') as encrypted_file:
-            encrypted_file.write(encrypted_data)
-        return send_file('encrypted_file.txt', as_attachment=True)
-    elif save_option == 'destino':
-        # Guardar en la carpeta de destino
-        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
-        if not os.path.exists(carpeta_destino):
-            os.makedirs(carpeta_destino)
-
-        # Utilizar el nombre del archivo cifrado para construir la ruta de destino
-        nombre_archivo_cifrado = secure_filename(file.filename)
-        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado.txt')
-
-        with open(ruta_destino, 'wb') as encrypted_file:
-            encrypted_file.write(encrypted_data)
-        return f'Archivo cifrado guardado con éxito en {ruta_destino}'
-
-    return "Opción de guardado no válida"
-
-# Ruta para descifrar archivos
-@app.route('/descifrar', methods=['POST'])
-def descifrar():
-    if 'file' not in request.files or 'key' not in request.files:
-        return "No se ha seleccionado algún archivo o clave"
-
-    try:
-        file = request.files['file']
-        key_file = request.files['key']
-
-        if file.filename == '' or key_file.filename == '':
-            return "No se ha seleccionado algún archivo o clave"
-
-        encrypted_data = file.read()
-        key = key_file.read()
-
-        # Obtén la opción de guardado del formulario
-        save_option = request.form.get('save_option')
-
-        decrypted_data = descifrar_datos(encrypted_data, key)
-
-        if save_option == 'local':
-            # Guardar localmente
-            with open('decrypted_file.txt', 'wb') as decrypted_file:
-                decrypted_file.write(decrypted_data)
-            return send_file('decrypted_file.txt', as_attachment=True)
-        elif save_option == 'destino':
-            # Guardar en la carpeta de destino
-            carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
-            if not os.path.exists(carpeta_destino):
-                os.makedirs(carpeta_destino)
-
-            # Utilizar el nombre del archivo descifrado para construir la ruta de destino
-            nombre_archivo_descifrado = secure_filename(file.filename.replace('_cifrado.txt', '_descifrado.txt'))
-            ruta_destino = os.path.join(carpeta_destino, nombre_archivo_descifrado)
-
-            with open(ruta_destino, 'wb') as decrypted_file:
-                decrypted_file.write(decrypted_data)
-            return f'Archivo descifrado guardado con éxito en {ruta_destino}'
-
-        return "Opción de guardado no válida"
-
-    except Exception as e:
-        return f"Error al descifrar el archivo: {str(e)}"
 
 # Ruta para subir archivos
 @app.route('/subir_archivo', methods=['POST'])
