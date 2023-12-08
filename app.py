@@ -1,3 +1,67 @@
+from datetime import datetime
+from flask import Flask, render_template, request
+import functions as f
+
+app = Flask(__name__)
+
+
+# Replace the existing home function with the one below
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+@app.route("/csimetrico/", methods=['GET','POST'])
+def csimetrico():
+    if request.method == 'POST':
+        message = request.form['message']
+        key = request.form['key']
+        mode = request.form['mode']
+
+        if mode == 'encrypt':
+            encrypted_message = f.encrypt_message(message, key)
+            return render_template('csimetrico.html', encrypted_message=encrypted_message, mode=mode)
+        elif mode == 'decrypt':
+            decrypted_message = f.decrypt_message(message, key)
+            return render_template('csimetrico.html', decrypted_message=decrypted_message, mode=mode)
+
+    return render_template("csimetrico.html")
+
+@app.route("/casimetrico/")
+def casimetrico():
+    return render_template("casimetrico.html")
+
+
+@app.route("/about/")
+def about():
+    return render_template("about.html")
+
+@app.route("/doc/")
+def doc():
+    return render_template("doc.html")
+
+@app.route("/otro/")
+def otro():
+    return render_template("index.html")
+
+
+
+@app.route("/hello/")
+@app.route("/hello/<name>")
+def hello_there(name = None):
+    return render_template(
+        "hello_there.html",
+        name=name,
+        date=datetime.now()
+    )
+
+
+@app.route("/api/data")
+def get_data():
+    return app.send_static_file("data.json")
+
+################################################################################
+from flask import send_file
+from Crypto.Random import get_random_bytes
 from flask import Flask, render_template, request, send_file, redirect, url_for
 from cryptography.fernet import Fernet
 from werkzeug.utils import secure_filename
@@ -15,14 +79,27 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.fernet import Fernet
-
 from flask import Flask, render_template, request, send_file
 from Crypto.Cipher import AES, DES
 from Crypto.Random import get_random_bytes
 
-app = Flask(__name__)
-public_keys = []  # Lista para almacenar los nombres de las claves públicas
 
+from funciones import encrypt_file_aes
+from funciones import decrypt_file_aes
+from funciones import encrypt_file_des
+from funciones import decrypt_file_des
+from funciones import public_keys
+
+
+#GENERAR LA CLAVE EN EL SIMETRICO
+@app.route('/otro/generate-key', methods=['GET'])
+def generate_key_aes():
+    key = get_random_bytes(16)
+    with open("encryption_key_aes.key", "wb") as key_file:
+        key_file.write(key)
+    return send_file("encryption_key_aes.key", as_attachment=True)
+
+#SUBIR LA CLAVE AL NAS
 @app.route('/subir_clave', methods=['POST'])
 def subir_clave():
     clave_file = request.files['clave']
@@ -41,27 +118,7 @@ def subir_clave():
 
     return f'Clave guardada con éxito en {ruta_destino_clave}'
 
-# Funciones para AES
-def encrypt_file_aes(plaintext, key):
-    cipher = AES.new(key, AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(plaintext)
-    return cipher.nonce + tag + ciphertext
-
-def decrypt_file_aes(ciphertext, key):
-    nonce = ciphertext[:16]
-    tag = ciphertext[16:32]
-    encrypted_data = ciphertext[32:]
-    cipher = AES.new(key, AES.MODE_EAX, nonce)
-    plaintext = cipher.decrypt_and_verify(encrypted_data, tag)
-    return plaintext
-
-@app.route('/generate-key', methods=['GET'])
-def generate_key_aes():
-    key = get_random_bytes(16)
-    with open("encryption_key_aes.key", "wb") as key_file:
-        key_file.write(key)
-    return send_file("encryption_key_aes.key", as_attachment=True)
-
+#ENCRIPTAR CON AES
 @app.route('/encrypt-file', methods=['POST'])
 def encrypt_file_route_aes():
     key_file = request.files['key']
@@ -92,7 +149,7 @@ def encrypt_file_route_aes():
 
     return "Opción de guardado no válida"
 
-
+#DESENCRIPTAR CON AES
 @app.route('/decrypt-file', methods=['POST'])
 def decrypt_file_route_aes():
     key_file = request.files['key']
@@ -123,18 +180,7 @@ def decrypt_file_route_aes():
 
     return "Opción de guardado no válida"
 
-
-# Funciones para DES
-def encrypt_file_des(plaintext, key):
-    cipher = DES.new(key, DES.MODE_ECB)
-    while len(plaintext) % 8 != 0:
-        plaintext += b' '
-    return cipher.encrypt(plaintext)
-
-def decrypt_file_des(ciphertext, key):
-    cipher = DES.new(key, DES.MODE_ECB)
-    return cipher.decrypt(ciphertext)
-
+#GENERAR CLAVE DES
 @app.route('/generate-keydes', methods=['GET'])
 def generate_key_des():
     key = get_random_bytes(8)
@@ -142,6 +188,7 @@ def generate_key_des():
         key_file.write(key)
     return send_file("encryption_key_des.key", as_attachment=True)
 
+#ENCRIPTAR CON EL DES
 @app.route('/encrypt-filedes', methods=['POST'])
 def encrypt_file_route_des():
     key_file = request.files['key']
@@ -172,9 +219,7 @@ def encrypt_file_route_des():
 
     return "Opción de guardado no válida"
 
-
-
-
+#DESENCRIPTAR CON EL DES
 @app.route('/decrypt-filedes', methods=['POST'])
 def decrypt_file_route_des():
     key_file = request.files['key']
@@ -188,6 +233,7 @@ def decrypt_file_route_des():
         decrypted_file.write(plaintext)
 
     return send_file("decrypted_file_des.txt", as_attachment=True)
+
 #############################################################################################
 
 # Ruta para generar y descargar las claves pública y privada
@@ -219,22 +265,6 @@ def generate_and_download_keys():
     with open('public_key.pem', 'w') as public_key_file:
         public_key_file.write(public_key_pem)
 
-    # Descargar la clave privada
-    @app.route('/download_private_key')
-    def download_private_key():
-        return send_from_directory(os.getcwd(), 'private_key.pem', as_attachment=True)
-
-    # Descargar la clave pública
-    @app.route('/download_public_key')
-    def download_public_key():
-        return send_from_directory(os.getcwd(), 'public_key.pem', as_attachment=True)
-
-
-# Ruta principal
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 @app.route('/get_private_key', methods=['GET'])
 def get_private_key():
     private_key = rsa.generate_private_key(
@@ -252,8 +282,6 @@ def get_private_key():
         file.write(private_key_pem)
 
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
-
-
 
 @app.route('/descifrar_con_clave_privada', methods=['POST'])
 def descifrar_con_clave_privada():
@@ -290,11 +318,6 @@ def descifrar_con_clave_privada():
 
     except Exception as e:
         return f"Error al descifrar el archivo: {str(e)}"
-
-
-
-
-
 
 @app.route('/cifrar_con_clave_publica', methods=['POST'])
 def cifrar_con_clave_publica():
@@ -402,34 +425,25 @@ def download_private_key():
 
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
+# Ruta para descargar archivos desde la carpeta compartida
+@app.route('/descargar_archivo', methods=['GET'])
+def descargar_archivo():
+    nombre_archivo = request.args.get('nombre_archivo')
 
-# Función para cargar la clave
-def cargar_clave():
-    if os.path.isfile('key.key'):
-        with open('key.key', 'rb') as key_file:
-            return key_file.read()
-    return None
+    if not nombre_archivo:
+        return
 
-# Función para descifrar los datos
-def descifrar_datos(encrypted_data, key):
-    cipher_suite = Fernet(key)
-    try:
-        decrypted_data = cipher_suite.decrypt(encrypted_data)
-        return decrypted_data
-    except Exception as e:
-        raise Exception(f"Error al descifrar los datos: {str(e)}")
-
-# Ruta para descargar la clave
-# @app.route('/descargar_clave', methods=['GET'])
-# def descargar_clave():
-#     key = cargar_clave()
-#     if key:
-#         with open('key.key', 'wb') as key_file:
-#             key_file.write(key)
-#         return send_file('key.key', as_attachment=True)
-#     return "No se ha generado ninguna clave aún."
-
-
+@app.route('/listar_claves_publicas')
+def listar_claves_publicas():
+    files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
+    public_keys.clear()  # Limpiar la lista de claves públicas antes de añadir nombres nuevos
+    for file in files:
+        if file.endswith('.pem') and 'public' in file.lower():  # Filtrar por archivos .pem y que contengan 'public' en el nombre
+            public_keys.append(file)
+    print(public_keys)  # Agregar esta línea para imprimir los nombres de los archivos
+    return render_template('index.html', public_keys=public_keys)
+ 
+    
 # Ruta para subir archivos
 @app.route('/subir_archivo', methods=['POST'])
 def subir_archivo():
@@ -455,22 +469,3 @@ def subir_archivo():
     archivo.save(ruta_destino)
 
     return f'Archivo subido con éxito a {ruta_destino}'
-
-# Ruta para descargar archivos desde la carpeta compartida
-@app.route('/descargar_archivo', methods=['GET'])
-def descargar_archivo():
-    nombre_archivo = request.args.get('nombre_archivo')
-
-    if not nombre_archivo:
-        return
-
-@app.route('/listar_claves_publicas')
-def listar_claves_publicas():
-    files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
-    public_keys.clear()  # Limpiar la lista de claves públicas antes de añadir nombres nuevos
-    for file in files:
-        if file.endswith('.pem') and 'public' in file.lower():  # Filtrar por archivos .pem y que contengan 'public' en el nombre
-            public_keys.append(file)
-    print(public_keys)  # Agregar esta línea para imprimir los nombres de los archivos
-    return render_template('index.html', public_keys=public_keys)
-
