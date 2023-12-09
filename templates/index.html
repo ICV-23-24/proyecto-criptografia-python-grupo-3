@@ -122,8 +122,9 @@
         <button type="submit" formaction="/download_private_key">Descargar Clave Privada</button>
         <button type="submit" formaction="/download_public_key">Descargar Clave Pública</button>
     </form>
+
     <h2>Cifrar archivo con clave pública</h2>
-<form action="/cifrar_con_clave_publica" method="post" enctype="multipart/form-data">
+    <form action="/cifrar_con_clave_publica" method="post" enctype="multipart/form-data">
     <label for="file">Seleccionar el archivo a cifrar:</label>
     <input type="file" name="file" id="file" accept=".txt">
     <br>
@@ -131,8 +132,12 @@
     <label for="public_key_file">Seleccionar la clave pública:</label>
     <input type="file" name="public_key_file" id="public_key_file" accept=".pem">
     <br>
-
-    <button type="submit">Cifrar archivo con clave pública</button>
+<label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">Drive</option>
+        </select>
+        <button type="submit">Cifrar Archivo</button>
 </form>
 
 

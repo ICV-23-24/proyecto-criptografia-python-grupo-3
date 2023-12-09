@@ -90,14 +90,29 @@ from funciones import encrypt_file_des
 from funciones import decrypt_file_des
 from funciones import public_keys
 
+#################################################################################
+
+  #####    ####    ##   ##  #######  ######   ######    ####      ####    #####
+ ##   ##    ##     ### ###   ##   #  # ## #    ##  ##    ##      ##  ##  ##   ##
+ #          ##     #######   ## #      ##      ##  ##    ##     ##       ##   ##
+  #####     ##     #######   ####      ##      #####     ##     ##       ##   ##
+      ##    ##     ## # ##   ## #      ##      ## ##     ##     ##       ##   ##
+ ##   ##    ##     ##   ##   ##   #    ##      ##  ##    ##      ##  ##  ##   ##
+  #####    ####    ##   ##  #######   ####    #### ##   ####      ####    #####
+
+#################################################################################
 
 #GENERAR LA CLAVE EN EL SIMETRICO
 @app.route('/otro/generate-key', methods=['GET'])
 def generate_key_aes():
+    # Genera una clave AES aleatoria de 16 bytes
     key = get_random_bytes(16)
+    # Abre un archivo en modo escritura binaria y le escribe la clave dentro
     with open("encryption_key_aes.key", "wb") as key_file:
         key_file.write(key)
+    # Esto ya permite la descarga de la clave
     return send_file("encryption_key_aes.key", as_attachment=True)
+
 
 #SUBIR LA CLAVE AL NAS
 @app.route('/subir_clave', methods=['POST'])
@@ -234,39 +249,60 @@ def decrypt_file_route_des():
 
     return send_file("decrypted_file_des.txt", as_attachment=True)
 
-#############################################################################################
+############################################################################################
 
-# Ruta para generar y descargar las claves pública y privada
-@app.route('/generate_and_download_keys', methods=['GET'])
-def generate_and_download_keys():
+   ##      #####    ####    ##   ##  #######  ######   ######    ####      ####    #####
+  ####    ##   ##    ##     ### ###   ##   #  # ## #    ##  ##    ##      ##  ##  ##   ##
+ ##  ##   #          ##     #######   ## #      ##      ##  ##    ##     ##       ##   ##
+ ##  ##    #####     ##     #######   ####      ##      #####     ##     ##       ##   ##
+ ######        ##    ##     ## # ##   ## #      ##      ## ##     ##     ##       ##   ##
+ ##  ##   ##   ##    ##     ##   ##   ##   #    ##      ##  ##    ##      ##  ##  ##   ##
+ ##  ##    #####    ####    ##   ##  #######   ####    #### ##   ####      ####    #####
+
+############################################################################################
+
+#GENERAR LAS CLAVES PRIV Y PUBL
+@app.route('/generate_keys')
+def generate_keys():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048
     )
 
-    # Generar la clave privada en formato PEM
+    public_key_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode('utf-8')
+
     private_key_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption()
     ).decode('utf-8')
 
-    # Generar la clave pública en formato PEM
+    return render_template('index.html', public_key=public_key_pem, private_key=private_key_pem)
+
+#DESCARGAR LA CLAVE PUBLICA
+@app.route('/download_public_key')
+def download_public_key():
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
     public_key_pem = private_key.public_key().public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo
     ).decode('utf-8')
 
-    # Guardar la clave privada en un archivo
-    with open('private_key.pem', 'w') as private_key_file:
-        private_key_file.write(private_key_pem)
+    filename = 'public_key.pem'
+    with open(filename, 'w') as file:
+        file.write(public_key_pem)
 
-    # Guardar la clave pública en un archivo
-    with open('public_key.pem', 'w') as public_key_file:
-        public_key_file.write(public_key_pem)
+    return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
-@app.route('/get_private_key', methods=['GET'])
-def get_private_key():
+#DESCARGAR LA CLAVE PRIVADA
+@app.route('/download_private_key')
+def download_private_key():
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048
@@ -283,6 +319,7 @@ def get_private_key():
 
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
+#DESCIFRAR CON LA CLAVE PRIVADA (NO FUNCIONA)
 @app.route('/descifrar_con_clave_privada', methods=['POST'])
 def descifrar_con_clave_privada():
     if 'file' not in request.files or 'private_key_file' not in request.files:
@@ -309,7 +346,6 @@ def descifrar_con_clave_privada():
                 label=None
             )
         )
-
         # Guardar el archivo descifrado localmente
         with open('decrypted_file.txt', 'wb') as decrypted_file:
             decrypted_file.write(decrypted_data)
@@ -319,6 +355,7 @@ def descifrar_con_clave_privada():
     except Exception as e:
         return f"Error al descifrar el archivo: {str(e)}"
 
+#CIFRAR CON LA CLAVE PUBLICA
 @app.route('/cifrar_con_clave_publica', methods=['POST'])
 def cifrar_con_clave_publica():
     if 'file' not in request.files or 'public_key_file' not in request.files:
@@ -326,6 +363,7 @@ def cifrar_con_clave_publica():
 
     file = request.files['file']
     public_key_file = request.files['public_key_file']
+    save_option = request.form.get('save_option')  # Obtener la opción de guardado
 
     if file.filename == '' or public_key_file.filename == '':
         return "No se ha seleccionado algún archivo o clave pública"
@@ -335,7 +373,6 @@ def cifrar_con_clave_publica():
 
     public_key = serialization.load_pem_public_key(public_key_pem, backend=default_backend())
 
-    # Cifrar usando la clave pública
     try:
         encrypted_data = public_key.encrypt(
             file_contents,
@@ -346,15 +383,28 @@ def cifrar_con_clave_publica():
             )
         )
 
-        # Guardar el archivo cifrado localmente
-        with open('encrypted_file.txt', 'wb') as encrypted_file:
-            encrypted_file.write(encrypted_data)
+        if save_option == 'local':
+            with open('encrypted_file.txt', 'wb') as encrypted_file:
+                encrypted_file.write(encrypted_data)
+            return send_file('encrypted_file.txt', as_attachment=True)
+        elif save_option == 'destino':
+            carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+            if not os.path.exists(carpeta_destino):
+                os.makedirs(carpeta_destino)
 
-        return send_file('encrypted_file.txt', as_attachment=True)
+            nombre_archivo_cifrado = secure_filename(file.filename)
+            ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado_rsa.txt')
+
+            with open(ruta_destino, 'wb') as encrypted_file:
+                encrypted_file.write(encrypted_data)
+            return f'Archivo cifrado RSA guardado con éxito en {ruta_destino}'
+        else:
+            return "Opción de guardado no válida"
 
     except Exception as e:
         return f"Error al cifrar el archivo: {str(e)}"
 
+#SUBIR CLAVE AL NAS
 @app.route('/upload_public_key', methods=['POST'])
 def upload_public_key():
     uploaded_file = request.files['public_key_file']
@@ -370,69 +420,7 @@ def upload_public_key():
     else:
         return "No se ha seleccionado ningún archivo"
 
-@app.route('/generate_keys')
-def generate_keys():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-
-    public_key_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
-
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode('utf-8')
-
-    return render_template('index.html', public_key=public_key_pem, private_key=private_key_pem)
-
-@app.route('/download_public_key')
-def download_public_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-    public_key_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
-
-    filename = 'public_key.pem'
-    with open(filename, 'w') as file:
-        file.write(public_key_pem)
-
-    return send_from_directory(os.getcwd(), filename, as_attachment=True)
-
-@app.route('/download_private_key')
-def download_private_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode('utf-8')
-
-    filename = 'private_key.pem'
-    with open(filename, 'w') as file:
-        file.write(private_key_pem)
-
-    return send_from_directory(os.getcwd(), filename, as_attachment=True)
-
-# Ruta para descargar archivos desde la carpeta compartida
-@app.route('/descargar_archivo', methods=['GET'])
-def descargar_archivo():
-    nombre_archivo = request.args.get('nombre_archivo')
-
-    if not nombre_archivo:
-        return
-
+#LISTAR LAS CLAVES PUBLICAS
 @app.route('/listar_claves_publicas')
 def listar_claves_publicas():
     files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
@@ -444,7 +432,7 @@ def listar_claves_publicas():
     return render_template('index.html', public_keys=public_keys)
  
     
-# Ruta para subir archivos
+#SUBIR CLAVE PUBLICA
 @app.route('/subir_archivo', methods=['POST'])
 def subir_archivo():
     if 'archivo' not in request.files:
@@ -469,3 +457,14 @@ def subir_archivo():
     archivo.save(ruta_destino)
 
     return f'Archivo subido con éxito a {ruta_destino}'
+
+############################################################################################################################################################################################################################
+                                                                                    ##                                                      ##
+  ####    ######    ####     ####              ######  ##  ##    ####              #####    ####    #####     ### ##   ####                 ##    ####    ######   ######    ####     #####    ###      ####    #####
+ ##  ##    ##  ##  ##  ##   ##  ##            ##  ##   ##  ##   ##  ##              ##     ##  ##   ##  ##   ##  ##   ##  ##             #####   ##  ##    ##  ##   ##  ##  ##  ##   ##         ##     ##  ##   ##  ##
+ ##        ##      ######   ##  ##            ##  ##   ##  ##   ######              ##     ######   ##  ##   ##  ##   ##  ##            ##  ##   ######    ##  ##   ##      ######    #####     ##     ##  ##   ##  ##
+ ##  ##    ##      ##       ##  ##             #####   ##  ##   ##                  ## ##  ##       ##  ##    #####   ##  ##            ##  ##   ##        #####    ##      ##            ##    ##     ##  ##   ##  ##
+  ####    ####      #####    ####                 ##    ######   #####               ###    #####   ##  ##       ##    ####              ######   #####    ##      ####      #####   ######    ####     ####    ##  ##
+                                                 ####                                                        #####                                        ####
+
+############################################################################################################################################################################################################################
