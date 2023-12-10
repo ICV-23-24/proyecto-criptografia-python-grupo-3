@@ -136,11 +136,16 @@ def subir_clave():
 #ENCRIPTAR CON AES
 @app.route('/encrypt-file', methods=['POST'])
 def encrypt_file_route_aes():
+# Se espera que se adjunte un archivo de clave en la solicitud.
+# este archivo se lee para obtener la clave para el cifrado AES
     key_file = request.files['key']
     key = key_file.read()
+# Se espera que se adjunte un archivo (file) para encriptarlo
+# El contenido del archivo se lee para obtener el texto que será encriptado
     plaintext_file = request.files['file']
     plaintext = plaintext_file.read()
-
+# Llama a la funcion que toma el texto plano y la clave
+# y devuelve el texto cifrado utilizando AES
     ciphertext = encrypt_file_aes(plaintext, key)
 
     # Guardar localmente o en una ruta
@@ -280,7 +285,7 @@ def generate_keys():
         encryption_algorithm=serialization.NoEncryption()
     ).decode('utf-8')
 
-    return render_template('index.html', public_key=public_key_pem, private_key=private_key_pem)
+    return render_template('casimetrico.html', public_key=public_key_pem, private_key=private_key_pem)
 
 #DESCARGAR LA CLAVE PUBLICA
 @app.route('/download_public_key')
@@ -323,13 +328,13 @@ def download_private_key():
 @app.route('/descifrar_con_clave_privada', methods=['POST'])
 def descifrar_con_clave_privada():
     if 'file' not in request.files or 'private_key_file' not in request.files:
-        return "No se ha seleccionado algún archivo o clave privada"
+        return "Falta el archivo o la clave privada"
 
     file = request.files['file']
     private_key_file = request.files['private_key_file']
 
     if file.filename == '' or private_key_file.filename == '':
-        return "No se ha seleccionado algún archivo o clave privada"
+        return "Falta el archivo o la clave privada"
 
     encrypted_data = file.read()
     private_key_pem = private_key_file.read()
@@ -354,6 +359,7 @@ def descifrar_con_clave_privada():
 
     except Exception as e:
         return f"Error al descifrar el archivo: {str(e)}"
+
 
 #CIFRAR CON LA CLAVE PUBLICA
 @app.route('/cifrar_con_clave_publica', methods=['POST'])
@@ -421,15 +427,25 @@ def upload_public_key():
         return "No se ha seleccionado ningún archivo"
 
 #LISTAR LAS CLAVES PUBLICAS
-@app.route('/listar_claves_publicas')
+from flask import request, send_file
+
+@app.route('/listar_claves_publicas', methods=['GET', 'POST'])
 def listar_claves_publicas():
-    files = os.listdir('.')  # Obtener todos los archivos en el directorio actual
-    public_keys.clear()  # Limpiar la lista de claves públicas antes de añadir nombres nuevos
+    if request.method == 'POST':
+        selected_keys = request.form.getlist('selected_keys')
+        # Lógica para descargar las claves seleccionadas
+        for key in selected_keys:
+            # Lógica para descargar cada clave seleccionada, por ejemplo:
+            return send_file(key, as_attachment=True)
+    
+    files = os.listdir('.')
+    public_keys = []  # Lista para almacenar las claves públicas
     for file in files:
-        if file.endswith('.pem') and 'public' in file.lower():  # Filtrar por archivos .pem y que contengan 'public' en el nombre
+        if file.endswith('.pem') and 'public' in file.lower():
             public_keys.append(file)
-    print(public_keys)  # Agregar esta línea para imprimir los nombres de los archivos
-    return render_template('index.html', public_keys=public_keys)
+
+    return render_template('casimetrico.html', public_keys=public_keys)
+
  
     
 #SUBIR CLAVE PUBLICA
@@ -457,6 +473,8 @@ def subir_archivo():
     archivo.save(ruta_destino)
 
     return f'Archivo subido con éxito a {ruta_destino}'
+
+
 
 ############################################################################################################################################################################################################################
                                                                                     ##                                                      ##

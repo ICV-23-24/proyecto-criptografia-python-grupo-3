@@ -1,37 +1,138 @@
-{% extends "layout.html" %}
-{% block title %}
-C. Simétrico
-{% endblock %}
-{% block content %}
-<h1>Encriptar y desencriptar mensaje con AES</h1>
+<!DOCTYPE html>
+<html lang="en">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
-    <h2>Encriptar Mensaje</h2>
-    <form method="post">
-        <label for="message">Mensaje:</label><br>
-        <input type="text" id="message" name="message"><br><br>
-        <label for="key">Clave:</label><br>
-        <input type="text" id="key" name="key"><br><br>
-        <input type="hidden" name="mode" value="encrypt">
-        <input type="submit" value="Encriptar">
+body#bodysime{
+    background-image: url(https://www.shutterstock.com/image-illustration/abstract-blue-futuristic-background-big-600nw-1729069588.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+body#bodysime h1,h2,h3,label,input,p{
+    color: white;
+    
+    font-family: 'Roboto', sans-serif;
+}
+.simetrico{
+    display: flex;
+}
+.simetricoaes, .simetricodes{
+    width:50%;
+}
+.simtittle{
+    font-size: 30px;
+}
+
+</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Cifrador y Descifrador de archivos</title>
+    <link rel="stylesheet" href="./estilos.css">
+</head>
+
+<body id="bodysime">
+    {% extends "layout.html" %}
+    {% block content %}
+<marquee class="simtittle" scrollamount="22"><h1>CIFRADO SIMÉTRICO</h1></marquee>
+    <div class="simetrico">
+        <div class="simetricoaes">
+
+    <h1>Cifrar con AES</h1>
+    
+    <!-- Formulario para generar la clave -->
+    <form action="/otro/generate-key" method="GET">
+        <button type="submit">Generar Clave</button>
     </form>
 
-    {% if encrypted_message %}
-        <h2>Mensaje Encriptado:</h2>
-        <p>{{ encrypted_message }}</p>
-    {% endif %}
+    <!-- Formulario para cifrar archivo -->
+    <form action="/encrypt-file" method="POST" enctype="multipart/form-data">
+        <h3>Cifrar</h3>
+        <label for="key">Seleccionar Clave:</label>
+        <input type="file" id="key" name="key" required><br><br>
 
-    <h2>Desencriptar Mensaje</h2>
-    <form method="post">
-        <label for="encrypted_message">Mensaje Encriptado:</label><br>
-        <input type="text" id="encrypted_message" name="message"><br><br>
-        <label for="key_decrypt">Clave:</label><br>
-        <input type="text" id="key_decrypt" name="key"><br><br>
-        <input type="hidden" name="mode" value="decrypt">
-        <input type="submit" value="Desencriptar">
+        <label for="file">Seleccionar Archivo a Cifrar:</label>
+        <input type="file" id="file" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">NAS</option>
+        </select>
+
+        <button type="submit">Cifrar Archivo</button>
     </form>
 
-    {% if decrypted_message %}
-        <h2>Mensaje:</h2>
-        <p>{{ decrypted_message }}</p>
-    {% endif %}
+    <!-- Formulario para descifrar archivo -->
+    <form action="/decrypt-file" method="POST" enctype="multipart/form-data">
+        <h3>Descifrar</h3>
+        <label for="key-decrypt">Seleccionar Clave:</label>
+        <input type="file" id="key-decrypt" name="key" required><br><br>
+
+        <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
+        <input type="file" id="file-decrypt" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">NAS</option>
+        </select>
+        <button type="submit">Descifrar Archivo</button>
+    </form>
+</div>
+<div class="simetricodes">
+
+    <h1>Cifrar con DES</h1>
+        
+    <!-- Formulario para generar la clave -->
+    <form action="/generate-keydes" method="GET">
+        <button type="submit">Generar Clave</button>
+    </form>
+
+    <!-- Formulario para cifrar archivo -->
+    <form action="/encrypt-filedes" method="POST" enctype="multipart/form-data">
+        <h3>Cifrar</h3>
+        <label for="key">Seleccionar Clave:</label>
+        <input type="file" id="key" name="key" required><br><br>
+
+        <label for="file">Seleccionar Archivo a Cifrar:</label>
+        <input type="file" id="file" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">NAS</option>
+        </select>
+        <button type="submit">Cifrar Archivo</button>
+    </form>
+
+    <!-- Formulario para descifrar archivo -->
+    <form action="/decrypt-filedes" method="POST" enctype="multipart/form-data">
+        <h3>Descifrar</h3>
+
+        <label for="key-decrypt">Seleccionar Clave:</label>
+        <input type="file" id="key-decrypt" name="key" required><br><br>
+
+        <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
+        <input type="file" id="file-decrypt" name="file" required><br><br>
+
+        <label for="save_option">Guardar en:</label>
+        <select name="save_option" id="save_option">
+            <option value="local">Local</option>
+            <option value="destino">NAS</option>
+        </select>
+        <button type="submit">Descifrar Archivo</button>
+    </form>
+
+</div>
+</div>   
+
+    <h2>Subir clave al NAS</h2>
+    <form action="/subir_clave" method="post" enctype="multipart/form-data">
+        <label for="clave">Seleccionar la clave para subir al NAS:</label>
+        <input type="file" name="clave" id="clave" accept=".key">
+        <button type="submit">Subir Clave al NAS</button>
+    </form>
+
 {% endblock %}
+</body>
+</html>
