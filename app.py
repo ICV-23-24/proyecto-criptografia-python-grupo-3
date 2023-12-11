@@ -82,6 +82,10 @@ from cryptography.fernet import Fernet
 from flask import Flask, render_template, request, send_file
 from Crypto.Cipher import AES, DES
 from Crypto.Random import get_random_bytes
+from flask import Flask, render_template, request, send_file, send_from_directory
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from flask import request, send_file
 
 
 from funciones import encrypt_file_aes
@@ -118,7 +122,8 @@ def generate_key_aes():
 @app.route('/subir_clave', methods=['POST'])
 def subir_clave():
     clave_file = request.files['clave']
-
+    
+    # Si no has seleccionado nada sale ese mensaje 
     if clave_file.filename == '':
         return "No se ha seleccionado ningún archivo de clave"
 
@@ -136,7 +141,7 @@ def subir_clave():
 #ENCRIPTAR CON AES
 @app.route('/encrypt-file', methods=['POST'])
 def encrypt_file_route_aes():
-# Se espera que se adjunte un archivo de clave en la solicitud.
+# Se espera que se adjunte un archivo de clave en la solicitud
 # este archivo se lee para obtener la clave para el cifrado AES
     key_file = request.files['key']
     key = key_file.read()
@@ -148,20 +153,21 @@ def encrypt_file_route_aes():
 # y devuelve el texto cifrado utilizando AES
     ciphertext = encrypt_file_aes(plaintext, key)
 
-    # Guardar localmente o en una ruta
+# Guardar localmente o en una ruta
     save_option = request.form.get('save_option')
 
     if save_option == 'local':
         with open("encrypted_file_aes.txt", "wb") as encrypted_file:
             encrypted_file.write(ciphertext)
         return send_file("encrypted_file_aes.txt", as_attachment=True)
+    
     elif save_option == 'destino':
         carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
         nombre_archivo_cifrado = secure_filename(plaintext_file.filename)
-        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado.txt')
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado)
 
         with open(ruta_destino, 'wb') as encrypted_file:
             encrypted_file.write(ciphertext)
@@ -172,11 +178,16 @@ def encrypt_file_route_aes():
 #DESENCRIPTAR CON AES
 @app.route('/decrypt-file', methods=['POST'])
 def decrypt_file_route_aes():
+# Se espera que se adjunte un archivo de clave en la solicitud
+# este archivo se lee para obtener la clave para el descifrado AES
     key_file = request.files['key']
     key = key_file.read()
+# Se espera que se adjunte un archivo (file) para descifrarlo
+# El contenido del archivo se lee para obtener el texto que será descifrado
     ciphertext_file = request.files['file']
     ciphertext = ciphertext_file.read()
-
+# Llama a la función y toma el archivo y la clave
+# y ya empieza a descifrar
     plaintext = decrypt_file_aes(ciphertext, key)
 
     # Guardar el archivo descifrado
@@ -192,7 +203,7 @@ def decrypt_file_route_aes():
             os.makedirs(carpeta_destino)
 
         nombre_archivo_descifrado = secure_filename(ciphertext_file.filename)
-        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_descifrado + '_descifrado.txt')
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_descifrado)
 
         with open(ruta_destino, 'wb') as decrypted_file:
             decrypted_file.write(plaintext)
@@ -203,7 +214,9 @@ def decrypt_file_route_aes():
 #GENERAR CLAVE DES
 @app.route('/generate-keydes', methods=['GET'])
 def generate_key_des():
+# Genera una clave de 8 bytes
     key = get_random_bytes(8)
+# Abre un archivo en modo escritura binaria con wb y le escribe la clave dentro
     with open("encryption_key_des.key", "wb") as key_file:
         key_file.write(key)
     return send_file("encryption_key_des.key", as_attachment=True)
@@ -211,13 +224,18 @@ def generate_key_des():
 #ENCRIPTAR CON EL DES
 @app.route('/encrypt-filedes', methods=['POST'])
 def encrypt_file_route_des():
+# Se espera que se adjunte un archivo de clave en la solicitud
+# este archivo se lee para obtener la clave para el cifrado DES
     key_file = request.files['key']
     key = key_file.read()
+# Se espera que se adjunte un archivo (file) para cifrarlo
+# El contenido del archivo se lee para obtener el texto que será cifrado
     plaintext_file = request.files['file']
     plaintext = plaintext_file.read()
+# Llama a la función y toma el archivo y la clave
+# y ya empieza a cifrar
 
-    ciphertext = encrypt_file_des(plaintext, key)  # Debes tener tu propia implementación de cifrado DES
-
+    ciphertext = encrypt_file_des(plaintext, key)  
     # Guardar el archivo cifrado DES
     save_option = request.form.get('save_option')
 
@@ -231,7 +249,7 @@ def encrypt_file_route_des():
             os.makedirs(carpeta_destino)
 
         nombre_archivo_cifrado = secure_filename(plaintext_file.filename)
-        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado_des.txt')
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado)
 
         with open(ruta_destino, 'wb') as encrypted_file:
             encrypted_file.write(ciphertext)
@@ -242,17 +260,41 @@ def encrypt_file_route_des():
 #DESENCRIPTAR CON EL DES
 @app.route('/decrypt-filedes', methods=['POST'])
 def decrypt_file_route_des():
+# Se espera que se adjunte un archivo de clave en la solicitud
+# este archivo se lee para obtener la clave para el descifrado DES
     key_file = request.files['key']
     key = key_file.read()
+# Se espera que se adjunte un archivo (file) para descifrarlo
+# El contenido del archivo se lee para obtener el texto que será descifrado  
     ciphertext_file = request.files['file']
     ciphertext = ciphertext_file.read()
 
+    # Desencriptar el archivo
     plaintext = decrypt_file_des(ciphertext, key)
 
-    with open("decrypted_file_des.txt", "wb") as decrypted_file:
-        decrypted_file.write(plaintext)
+    # Obtener la opción de guardado del request
+    save_option = request.form.get('save_option')
 
-    return send_file("decrypted_file_des.txt", as_attachment=True)
+    # Lógica para guardar en local o en una ruta compartida
+    if save_option == 'local':
+        # Guardar el archivo desencriptado en local
+        with open("decrypted_file_des.txt", "wb") as decrypted_file:
+            decrypted_file.write(plaintext)
+        return send_file("decrypted_file_des.txt", as_attachment=True)
+    elif save_option == 'destino':
+        # Guardar en la ruta compartida
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        if not os.path.exists(carpeta_destino):
+            os.makedirs(carpeta_destino)
+
+        nombre_archivo_desencriptado = secure_filename(ciphertext_file.filename)
+        ruta_destino = os.path.join(carpeta_destino, nombre_archivo_desencriptado)
+
+        with open(ruta_destino, 'wb') as decrypted_file:
+            decrypted_file.write(plaintext)
+        return f'Archivo descifrado DES guardado con éxito en {ruta_destino}'
+
+    return "Opción de guardado no válida"
 
 ############################################################################################
 
@@ -265,214 +307,171 @@ def decrypt_file_route_des():
  ##  ##    #####    ####    ##   ##  #######   ####    #### ##   ####      ####    #####
 
 ############################################################################################
+app.config['UPLOAD_FOLDER'] = 'upload'
 
-#GENERAR LAS CLAVES PRIV Y PUBL
-@app.route('/generate_keys')
+@app.route('/generate-keys', methods=['POST'])
 def generate_keys():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
+    key = RSA.generate(2048)
+    private_key = key.export_key()
+    public_key = key.publickey().export_key()
 
-    public_key_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
+    with open('private_key.pem', 'wb') as private_file:
+        private_file.write(private_key)
 
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode('utf-8')
+    with open('public_key.pem', 'wb') as public_file:
+        public_file.write(public_key)
 
-    return render_template('casimetrico.html', public_key=public_key_pem, private_key=private_key_pem)
+    return 'Claves generadas. <a href="/casimetrico">Volver</a>'
 
-#DESCARGAR LA CLAVE PUBLICA
-@app.route('/download_public_key')
-def download_public_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-    public_key_pem = private_key.public_key().public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode('utf-8')
-
-    filename = 'public_key.pem'
-    with open(filename, 'w') as file:
-        file.write(public_key_pem)
-
-    return send_from_directory(os.getcwd(), filename, as_attachment=True)
-
-#DESCARGAR LA CLAVE PRIVADA
-@app.route('/download_private_key')
+@app.route('/download-private-key')
 def download_private_key():
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048
-    )
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode('utf-8')
+    return send_file('private_key.pem', as_attachment=True)
 
-    filename = 'private_key.pem'
-    with open(filename, 'w') as file:
-        file.write(private_key_pem)
+@app.route('/download-public-key')
+def download_public_key():
+    return send_file('public_key.pem', as_attachment=True)
 
-    return send_from_directory(os.getcwd(), filename, as_attachment=True)
-
-#DESCIFRAR CON LA CLAVE PRIVADA (NO FUNCIONA)
-@app.route('/descifrar_con_clave_privada', methods=['POST'])
-def descifrar_con_clave_privada():
-    if 'file' not in request.files or 'private_key_file' not in request.files:
-        return "Falta el archivo o la clave privada"
-
+# CIFRAR CON CLAVE PÚBLICA
+@app.route('/encrypt', methods=['POST'])
+def encrypt():
     file = request.files['file']
-    private_key_file = request.files['private_key_file']
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_encrypt.txt'))
 
-    if file.filename == '' or private_key_file.filename == '':
-        return "Falta el archivo o la clave privada"
+    public_key = request.files['public_key']
+    public_key.save(os.path.join(app.config['UPLOAD_FOLDER'], 'public_key.pem'))
 
-    encrypted_data = file.read()
-    private_key_pem = private_key_file.read()
+    recipient_key = RSA.import_key(open(os.path.join(app.config['UPLOAD_FOLDER'], 'public_key.pem')).read())
+    cipher_rsa = PKCS1_OAEP.new(recipient_key)
 
-    private_key = serialization.load_pem_private_key(private_key_pem, password=None, backend=default_backend())
+    # Generar una clave aleatoria para AES
+    aes_key = get_random_bytes(16)
+    aes_cipher = AES.new(aes_key, AES.MODE_EAX)
 
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_encrypt.txt'), 'rb') as f:
+        plaintext = f.read()
+
+    # Cifrar el archivo con AES
+    ciphertext, tag = aes_cipher.encrypt_and_digest(plaintext)
+
+    # Cifrar la clave AES con RSA
+    encrypted_aes_key = cipher_rsa.encrypt(aes_key)
+
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted_file.bin'), 'wb') as ef:
+        ef.write(encrypted_aes_key)
+        ef.write(aes_cipher.nonce)
+        ef.write(tag)
+        ef.write(ciphertext)
+
+    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted_file.bin'), as_attachment=True)
+
+# DESCIFRAR CON LA CLAVE PRIVADA 
+@app.route('/decrypt', methods=['POST'])
+def decrypt():
     try:
-        # Descifrar utilizando la clave privada
-        decrypted_data = private_key.decrypt(
-            encrypted_data,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-        # Guardar el archivo descifrado localmente
-        with open('decrypted_file.txt', 'wb') as decrypted_file:
-            decrypted_file.write(decrypted_data)
+        file_to_decrypt = request.files['file_to_decrypt']
+        file_to_decrypt.save(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_decrypt.bin'))
 
-        return send_file('decrypted_file.txt', as_attachment=True)
+        private_key = request.files['private_key']
+        private_key.save(os.path.join(app.config['UPLOAD_FOLDER'], 'private_key.pem'))
 
+        private_key = RSA.import_key(open(os.path.join(app.config['UPLOAD_FOLDER'], 'private_key.pem')).read())
+        cipher_rsa = PKCS1_OAEP.new(private_key)
+
+        # Leer el archivo cifrado
+        with open(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_decrypt.bin'), 'rb') as f:
+            encrypted_aes_key = f.read(256)  # Tamaño de la clave RSA cifrada
+            nonce = f.read(16)
+            tag = f.read(16)
+            ciphertext = f.read()
+
+        # Descifrar la clave AES con RSA
+        aes_key = cipher_rsa.decrypt(encrypted_aes_key)
+
+        # Descifrar el archivo con AES
+        aes_cipher = AES.new(aes_key, AES.MODE_EAX, nonce=nonce)
+        decrypted_file = aes_cipher.decrypt_and_verify(ciphertext, tag)
+
+        with open(os.path.join(app.config['UPLOAD_FOLDER'], 'decrypted_file.txt'), 'wb') as df:
+            df.write(decrypted_file)
+
+        return send_file(os.path.join(app.config['UPLOAD_FOLDER'], 'decrypted_file.txt'), as_attachment=True)
     except Exception as e:
-        return f"Error al descifrar el archivo: {str(e)}"
+        return f'Error al descifrar el archivo: {str(e)}. <a href="/">Volver</a>'
 
-
-#CIFRAR CON LA CLAVE PUBLICA
-@app.route('/cifrar_con_clave_publica', methods=['POST'])
-def cifrar_con_clave_publica():
-    if 'file' not in request.files or 'public_key_file' not in request.files:
-        return "No se ha seleccionado algún archivo o clave pública"
-
-    file = request.files['file']
-    public_key_file = request.files['public_key_file']
-    save_option = request.form.get('save_option')  # Obtener la opción de guardado
-
-    if file.filename == '' or public_key_file.filename == '':
-        return "No se ha seleccionado algún archivo o clave pública"
-
-    file_contents = file.read()
-    public_key_pem = public_key_file.read()
-
-    public_key = serialization.load_pem_public_key(public_key_pem, backend=default_backend())
-
-    try:
-        encrypted_data = public_key.encrypt(
-            file_contents,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
-
-        if save_option == 'local':
-            with open('encrypted_file.txt', 'wb') as encrypted_file:
-                encrypted_file.write(encrypted_data)
-            return send_file('encrypted_file.txt', as_attachment=True)
-        elif save_option == 'destino':
-            carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
-            if not os.path.exists(carpeta_destino):
-                os.makedirs(carpeta_destino)
-
-            nombre_archivo_cifrado = secure_filename(file.filename)
-            ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado + '_cifrado_rsa.txt')
-
-            with open(ruta_destino, 'wb') as encrypted_file:
-                encrypted_file.write(encrypted_data)
-            return f'Archivo cifrado RSA guardado con éxito en {ruta_destino}'
-        else:
-            return "Opción de guardado no válida"
-
-    except Exception as e:
-        return f"Error al cifrar el archivo: {str(e)}"
 
 #SUBIR CLAVE AL NAS
-@app.route('/upload_public_key', methods=['POST'])
-def upload_public_key():
-    uploaded_file = request.files['public_key_file']
-    if uploaded_file.filename != '':
-        filename = uploaded_file.filename
-        uploaded_file.save(filename)
-        # Puedes acceder al contenido del archivo guardado para realizar operaciones adicionales si lo necesitas
-        with open(filename, 'r') as file:
-            public_key_content = file.read()
-            # Puedes imprimir el contenido si quieres verificar que se cargó correctamente
-            print(public_key_content)
-        return "Clave pública subida exitosamente"
-    else:
-        return "No se ha seleccionado ningún archivo"
+# @app.route('/upload_public_key', methods=['POST'])
+# def upload_public_key():
+#     # Intenta obtener el archivo de clave publica
+#     uploaded_file = request.files['public_key_file']
+    
+#     if uploaded_file.filename != '':
+#         # Obtiene el nombre del archivo
+#         filename = uploaded_file.filename
+#         # Guarda el archivo en el sistema 
+#         uploaded_file.save(filename)
+        
+#         # Abre el archivo recién guardado en modo lectura
+#         with open(filename, 'r') as file:
+#             # Lee el contenido del archivo y lo almacena en la variable public_key_content
+#             public_key_content = file.read()
+#             print(public_key_content)
+        
+#         return "Clave pública subida exitosamente"
+#     else:
+#         return "No se ha seleccionado ningún archivo"
+
 
 #LISTAR LAS CLAVES PUBLICAS
-from flask import request, send_file
 
+# Definición de la ruta para listar claves públicas
 @app.route('/listar_claves_publicas', methods=['GET', 'POST'])
 def listar_claves_publicas():
     if request.method == 'POST':
+        # Obtiene una lista de las claves seleccionadas
         selected_keys = request.form.getlist('selected_keys')
-        # Lógica para descargar las claves seleccionadas
+        
+        # Bucle for para descargar las claves seleccionadas
         for key in selected_keys:
-            # Lógica para descargar cada clave seleccionada, por ejemplo:
+            # Envía cada clave seleccionada como un archivo pa descargar
             return send_file(key, as_attachment=True)
     
+    # Obtiene la lista de archivos en el directorio actual
     files = os.listdir('.')
-    public_keys = []  # Lista para almacenar las claves públicas
+    public_keys = []  # Array para almacenar las claves públicas
+    
+    # Filtra los archivos para obtener las claves públicas
     for file in files:
         if file.endswith('.pem') and 'public' in file.lower():
             public_keys.append(file)
-
+    # Deuvelve las claves
     return render_template('casimetrico.html', public_keys=public_keys)
-
  
     
 #SUBIR CLAVE PUBLICA
 @app.route('/subir_archivo', methods=['POST'])
 def subir_archivo():
+    # Verifica si se ha enviado un archivo en la solicitud
     if 'archivo' not in request.files:
         return 'No se encontró el archivo en la solicitud'
 
+    # oobtiene el archivo enviado en la solicitud
     archivo = request.files['archivo']
 
     if archivo.filename == '':
         return 'No se seleccionó ningún archivo'
-
-    # Ruta de destino en la red
+    # Donde se va a subir
     carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
 
-    # Asegúrate de que la carpeta de destino exista
     if not os.path.exists(carpeta_destino):
         os.makedirs(carpeta_destino)
 
-    # Ruta completa del archivo en la carpeta de destino
+    # Ruta completa del archivo en el NAS
     ruta_destino = os.path.join(carpeta_destino, secure_filename(archivo.filename))
-
-    # Copiar el archivo a la carpeta de destino
+    # Guarda el archivo en la carpeta de destino
     archivo.save(ruta_destino)
-
     return f'Archivo subido con éxito a {ruta_destino}'
+
 
 
 

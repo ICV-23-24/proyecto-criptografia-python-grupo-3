@@ -16,47 +16,31 @@
 <body>
     {% extends "layout.html" %}
     {% block content %}
-    <h1>Cifrado Asimétrico</h1>
-    <h2>Generar Claves</h2>
-    <form action="/generate_keys" method="get">
-        <button type="submit">Generar Claves</button>
-    </form>
-    <h2>Generar y descargar claves</h2>
-    <form action="/generate_and_download_keys" method="get">
-        <button type="submit" formaction="/download_private_key">Descargar Clave Privada</button>
-        <button type="submit" formaction="/download_public_key">Descargar Clave Pública</button>
-    </form>
-
-    <h2>Cifrar archivo con clave pública</h2>
-    <form action="/cifrar_con_clave_publica" method="post" enctype="multipart/form-data">
-    <label for="file">Seleccionar el archivo a cifrar:</label>
-    <input type="file" name="file" id="file" accept=".txt">
-    <br>
-
-    <label for="public_key_file">Seleccionar la clave pública:</label>
-    <input type="file" name="public_key_file" id="public_key_file" accept=".pem">
-    <br>
-<label for="save_option">Guardar en:</label>
-        <select name="save_option" id="save_option">
-            <option value="local">Local</option>
-            <option value="destino">Drive</option>
-        </select>
-        <button type="submit">Cifrar Archivo</button>
+<h1>Cifrado Asimétrico</h1>
+<form action="/generate-keys" method="POST">
+    <input type="submit" value="Generar Claves">
 </form>
 
+<h1>Descargar Claves</h1>
+<a href="/download-private-key"><button>Descargar Clave Privada</button></a>
+<a href="/download-public-key"><button>Descargar Clave Pública</button></a>
 
-<h2>Descifrar archivo con clave privada</h2>
-<form action="/descifrar_con_clave_privada" method="post" enctype="multipart/form-data">
-    <label for="file_to_decrypt">Seleccionar el archivo cifrado:</label>
-    <input type="file" name="file" id="file_to_decrypt" accept=".txt">
+<h1>Cifrar Archivo</h1>
+<form action="/encrypt" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".txt">
     <br>
-
-    <label for="private_key_file">Seleccionar la clave privada:</label>
-    <input type="file" name="private_key_file" id="private_key_file" accept=".pem">
-    <br>
-
-    <button type="submit">Descifrar archivo con clave privada</button>
+    <input type="file" name="public_key" accept=".pem">
+    <input type="submit" value="Cifrar Archivo">
 </form>
+
+<h1>Descifrar Archivo</h1>
+<form action="/decrypt" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file_to_decrypt" accept=".bin">
+    <br>
+    <input type="file" name="private_key" accept=".pem">
+    <input type="submit" value="Descifrar Archivo">
+</form>
+
 <hr>
  
    
