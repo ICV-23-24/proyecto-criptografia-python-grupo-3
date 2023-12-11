@@ -334,34 +334,40 @@ def download_public_key():
 # CIFRAR CON CLAVE PÚBLICA
 @app.route('/encrypt', methods=['POST'])
 def encrypt():
+    # Se recibe el archivo y se guarda en el servidor que es la carpeta uploads esa
     file = request.files['file']
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_encrypt.txt'))
 
+    # Se recibe la clave pública RSA y se guarda en el proyecto como public_key.pem
     public_key = request.files['public_key']
     public_key.save(os.path.join(app.config['UPLOAD_FOLDER'], 'public_key.pem'))
 
+    # Se importa la clave pública RSA para usarla en el cifrado RSA
     recipient_key = RSA.import_key(open(os.path.join(app.config['UPLOAD_FOLDER'], 'public_key.pem')).read())
-    cipher_rsa = PKCS1_OAEP.new(recipient_key)
+    cipher_rsa = PKCS1_OAEP.new(recipient_key)  # Se crea un objeto de cifrado RSA
 
-    # Generar una clave aleatoria para AES
+    # Se genera una clave aleatoria para AES
     aes_key = get_random_bytes(16)
-    aes_cipher = AES.new(aes_key, AES.MODE_EAX)
+    aes_cipher = AES.new(aes_key, AES.MODE_EAX)  # Se crea un objeto de cifrado AES
 
+    # Se lee el contenido del archivo que se va a cifrar
     with open(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_encrypt.txt'), 'rb') as f:
         plaintext = f.read()
 
-    # Cifrar el archivo con AES
+    # Se cifra el archivo con AES PARA PERMITIR CIFRAR ARCHIVOS GRANDES
     ciphertext, tag = aes_cipher.encrypt_and_digest(plaintext)
 
-    # Cifrar la clave AES con RSA
+    # Se cifra la clave AES con RSA
     encrypted_aes_key = cipher_rsa.encrypt(aes_key)
 
+    # Se escribe un archivo binario 'encrypted_file.bin' con la clave AES cifrada
     with open(os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted_file.bin'), 'wb') as ef:
-        ef.write(encrypted_aes_key)
-        ef.write(aes_cipher.nonce)
-        ef.write(tag)
-        ef.write(ciphertext)
+        ef.write(encrypted_aes_key)  # Clave AES cifrada
+        ef.write(aes_cipher.nonce)  # Nonce de AES
+        ef.write(tag)  # Tag de autenticación
+        ef.write(ciphertext)  # Texto cifrado
 
+    # Se envía el archivo binario como una descarga adjunta al cliente
     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted_file.bin'), as_attachment=True)
 
 # DESCIFRAR CON LA CLAVE PRIVADA 
@@ -396,7 +402,7 @@ def decrypt():
 
         return send_file(os.path.join(app.config['UPLOAD_FOLDER'], 'decrypted_file.txt'), as_attachment=True)
     except Exception as e:
-        return f'Error al descifrar el archivo: {str(e)}. <a href="/">Volver</a>'
+        return f'Error al descifrar el archivo: {str(e)}. <a href="/casimetrico">Volver</a>'
 
 
 #SUBIR CLAVE AL NAS
