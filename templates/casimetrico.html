@@ -1,6 +1,73 @@
+<<<<<<< HEAD
 {% extends "layout.html" %}
 {% block title %}
 C. Simétrico
+=======
+<!DOCTYPE html>
+<html lang="en">
+<style>
+.simetrico{
+    display: flex;
+}
+.simetricoaes, .simetricodes{
+    width:50%;
+}
+</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Cifrador y Descifrador de archivos</title>
+</head>
+
+<body>
+    {% extends "layout.html" %}
+    {% block content %}
+<h1>Cifrado Asimétrico</h1>
+<form action="/generate-keys" method="POST">
+    <input type="submit" value="Generar Claves">
+</form>
+
+<h1>Descargar Claves</h1>
+<a href="/download-private-key"><button>Descargar Clave Privada</button></a>
+<a href="/download-public-key"><button>Descargar Clave Pública</button></a>
+
+<h1>Cifrar Archivo</h1>
+<form action="/encrypt" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".txt">
+    <br>
+    <input type="file" name="public_key" accept=".pem">
+    <input type="submit" value="Cifrar Archivo">
+</form>
+
+<h1>Descifrar Archivo</h1>
+<form action="/decrypt" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file_to_decrypt" accept=".bin">
+    <br>
+    <input type="file" name="private_key" accept=".pem">
+    <input type="submit" value="Descifrar Archivo">
+</form>
+
+<hr>
+ 
+   
+    <h2>Subir Clave Pública</h2>
+    <form action="/upload_public_key" method="post" enctype="multipart/form-data">
+        <input type="file" name="public_key_file" accept=".pem">
+        <button type="submit">Subir Clave Pública</button>
+    </form>
+
+    
+    <h2>Listar Claves Públicas</h2>
+    <form action="/listar_claves_publicas" method="post">
+        {% for key in public_keys %}
+            <label>
+                <input type="radio" name="selected_keys" value="{{ key }}"> {{ key }}<br>
+            </label>
+        {% endfor %}
+        <br>
+        <button type="submit">Listar y descargar claves Seleccionadas</button>
+    </form>
+    
+>>>>>>> 0a8f9bc17417f420478be94b8ad7863b519e5388
 {% endblock %}
 {% block content %}
 <p>Funcionalidades de cifrado simétrico</p>
