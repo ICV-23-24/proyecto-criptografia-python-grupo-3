@@ -146,37 +146,49 @@ from werkzeug.utils import secure_filename
 #ENCRIPTAR CON AES
 @app.route('/encrypt-file', methods=['POST'])
 def encrypt_file_route_aes():
+# Se espera que se adjunte un archivo .key en la solicitud
+# este archivo se lee para obtener la clave para el cifrado AES
     key_file = request.files['key']
     key = key_file.read()
-
+# Se espera que se adjunte un archivo para encriptarlo
+# El contenido del archivo se lee para obtener el texto que será encriptado
     plaintext_file = request.files['file']
     plaintext = plaintext_file.read()
-
+# Llama a la funcion que toma el texto plano y la clave
+# y devuelve el texto cifrado utilizando AES
     ciphertext = encrypt_file_aes(plaintext, key)
-
+    
+# Guardar localmente o en una ruta
     save_option = request.form.get('save_option')
 
+# Opción para guardar en local
     if save_option == 'local':
         with open("encrypted_file_aes.txt", "wb") as encrypted_file:
             encrypted_file.write(ciphertext)
         return send_file("encrypted_file_aes.txt", as_attachment=True)
     
+# Opción para guardar en el NAS   
     elif save_option == 'destino':
         carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Cifrados AES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
+# Obtener el nombre del archivo de texto plano
         nombre_archivo_cifrado = secure_filename(plaintext_file.filename)
+# Establecer la ruta de destino para el archivo encriptado
         ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado)
-
+        
+# Verificar si ya existe un archivo con el mismo nombre en la carpeta de destino
         if os.path.exists(ruta_destino):
+# Si existe, agregar un contador al nombre del archivo para hacerlo único
             base, extension = os.path.splitext(nombre_archivo_cifrado)
             contador = 1
             while os.path.exists(os.path.join(carpeta_destino, f"{base}_{contador}{extension}")):
                 contador += 1
             nombre_archivo_cifrado = f"{base}_{contador}{extension}"
             ruta_destino = os.path.join(carpeta_destino, nombre_archivo_cifrado)
-
+            
+# Escribir los datos encriptados en el archivo en el destino especificado
         with open(ruta_destino, 'wb') as encrypted_file:
             encrypted_file.write(ciphertext)
         return f'Archivo cifrado guardado con éxito en {ruta_destino}'
@@ -186,12 +198,15 @@ def encrypt_file_route_aes():
 #DESENCRIPTAR CON AES
 @app.route('/decrypt-file', methods=['POST'])
 def decrypt_file_route_aes():
+# Se espera que se adjunte un archivo .key en la solicitud
+# este archivo se lee para obtener la clave para el descifrado AES
     key_file = request.files['key']
     key = key_file.read()
-
+# Se espera que se adjunte un archivo para desencriptarlo
+# El contenido del archivo se lee para obtener el texto que será desencriptado
     ciphertext_file = request.files['file']
     ciphertext = ciphertext_file.read()
-
+# Llama a la función desencripta usando aes
     plaintext = decrypt_file_aes(ciphertext, key)
 
     save_option = request.form.get('save_option')
@@ -236,14 +251,19 @@ def generate_key_des():
 # ENCRIPTAR CON DES
 @app.route('/encrypt-filedes', methods=['POST'])
 def encrypt_file_route_des():
+# Se espera que se adjunte un archivo .key en la solicitud
+# este archivo se lee para obtener la clave para el cifrado DES
     key_file = request.files['key']
     key = key_file.read()
-
+# Se espera que se adjunte un archivo para encriptarlo
+# El contenido del archivo se lee para obtener el texto que será encriptado
     plaintext_file = request.files['file']
     plaintext = plaintext_file.read()
-
+# Llama a la funcion que toma el texto plano y la clave
+# y devuelve el texto cifrado utilizando DES
     ciphertext = encrypt_file_des(plaintext, key)
 
+# Guardar localmente o en una ruta
     save_option = request.form.get('save_option')
 
     if save_option == 'local':
@@ -288,7 +308,7 @@ def decrypt_file_route_des():
     # Desencriptar el archivo
     plaintext = decrypt_file_des(ciphertext, key)
 
-    # Obtener la opción de guardado del request
+    # Obtener la opción de guardado 
     save_option = request.form.get('save_option')
 
     # Lógica para guardar en local o en una ruta compartida
@@ -298,7 +318,7 @@ def decrypt_file_route_des():
             decrypted_file.write(plaintext)
         return send_file("decrypted_file_des.txt", as_attachment=True)
     elif save_option == 'destino':
-        # Guardar en la ruta compartida
+        # Guardar en el nas
         carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Descifrados DES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
