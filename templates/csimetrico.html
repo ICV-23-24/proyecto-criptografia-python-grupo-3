@@ -48,7 +48,7 @@ body#bodysime h1,h2,h3,label,input,p{
     <form action="/encrypt-file" method="POST" enctype="multipart/form-data">
         <h3>Cifrar</h3>
         <label for="key">Seleccionar Clave:</label>
-        <input type="file" id="key" name="key" required><br><br>
+        <input type="file" id="key" name="key" required accept=".key"><br><br>
 
         <label for="file">Seleccionar Archivo a Cifrar:</label>
         <input type="file" id="file" name="file" required><br><br>
@@ -66,7 +66,7 @@ body#bodysime h1,h2,h3,label,input,p{
     <form action="/decrypt-file" method="POST" enctype="multipart/form-data">
         <h3>Descifrar</h3>
         <label for="key-decrypt">Seleccionar Clave:</label>
-        <input type="file" id="key-decrypt" name="key" required><br><br>
+        <input type="file" id="key-decrypt" name="key" required accept=".key"><br><br>
 
         <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
         <input type="file" id="file-decrypt" name="file" required><br><br>
@@ -92,7 +92,7 @@ body#bodysime h1,h2,h3,label,input,p{
     <form action="/encrypt-filedes" method="POST" enctype="multipart/form-data">
         <h3>Cifrar</h3>
         <label for="key">Seleccionar Clave:</label>
-        <input type="file" id="key" name="key" required><br><br>
+        <input type="file" id="key" name="key" required accept=".key"><br><br>
 
         <label for="file">Seleccionar Archivo a Cifrar:</label>
         <input type="file" id="file" name="file" required><br><br>
@@ -110,7 +110,7 @@ body#bodysime h1,h2,h3,label,input,p{
         <h3>Descifrar</h3>
 
         <label for="key-decrypt">Seleccionar Clave:</label>
-        <input type="file" id="key-decrypt" name="key" required><br><br>
+        <input type="file" id="key-decrypt" name="key" required accept=".key"><br><br>
 
         <label for="file-decrypt">Seleccionar Archivo a Descifrar:</label>
         <input type="file" id="file-decrypt" name="file" required><br><br>

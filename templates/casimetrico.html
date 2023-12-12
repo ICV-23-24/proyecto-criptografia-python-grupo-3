@@ -1,11 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-.simetrico{
-    display: flex;
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+
+body#bodyasi{
+  background-image: url(https://media.istockphoto.com/id/1400779382/photo/network-security-background.webp?b=1&s=170667a&w=0&k=20&c=LdbvZLdObTWMYxkDBquy8WZBdGgnUB1i0ggVu7KSEUc=);
+  background-repeat: no-repeat;
+  background-size: cover;
 }
-.simetricoaes, .simetricodes{
-    width:50%;
+body#bodyasi h1,h2,h3,label,input,p{
+  color: white;
+  font-family: 'Roboto', sans-serif;
+
+}
+input[type=submit]{
+  color: black;
+}
+.simtittle{
+    font-size: 30px;
 }
 </style>
 <head>
@@ -13,10 +25,11 @@
     <title>Cifrador y Descifrador de archivos</title>
 </head>
 
-<body>
+<body id="bodyasi">
     {% extends "layout.html" %}
     {% block content %}
-<h1>Cifrado Asimétrico</h1>
+    <marquee class="simtittle" scrollamount="22"><h1>CIFRADO ASIMETRICO</h1></marquee>
+
 <form action="/generate-keys" method="POST">
     <input type="submit" value="Generar Claves">
 </form>

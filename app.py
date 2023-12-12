@@ -128,7 +128,7 @@ def subir_clave():
         return "No se ha seleccionado ningún archivo de clave"
 
     # Ruta de destino para la clave en la carpeta compartida
-    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Claves Simetrico'
     if not os.path.exists(carpeta_destino):
         os.makedirs(carpeta_destino)
 
@@ -162,7 +162,7 @@ def encrypt_file_route_aes():
         return send_file("encrypted_file_aes.txt", as_attachment=True)
     
     elif save_option == 'destino':
-        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Cifrados AES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
@@ -198,7 +198,7 @@ def decrypt_file_route_aes():
             decrypted_file.write(plaintext)
         return send_file("decrypted_file_aes.txt", as_attachment=True)
     elif save_option == 'destino':
-        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Descifrados AES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
@@ -244,7 +244,7 @@ def encrypt_file_route_des():
             encrypted_file.write(ciphertext)
         return send_file("encrypted_file_des.txt", as_attachment=True)
     elif save_option == 'destino':
-        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Cifrados DES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
@@ -283,7 +283,7 @@ def decrypt_file_route_des():
         return send_file("decrypted_file_des.txt", as_attachment=True)
     elif save_option == 'destino':
         # Guardar en la ruta compartida
-        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+        carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Descifrados DES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
@@ -406,26 +406,26 @@ def decrypt():
 
 
 #SUBIR CLAVE AL NAS
-# @app.route('/upload_public_key', methods=['POST'])
-# def upload_public_key():
-#     # Intenta obtener el archivo de clave publica
-#     uploaded_file = request.files['public_key_file']
+@app.route('/upload_public_key', methods=['POST'])
+def upload_public_key():
+    # Intenta obtener el archivo de clave publica
+    uploaded_file = request.files['public_key_file']
     
-#     if uploaded_file.filename != '':
-#         # Obtiene el nombre del archivo
-#         filename = uploaded_file.filename
-#         # Guarda el archivo en el sistema 
-#         uploaded_file.save(filename)
+    if uploaded_file.filename != '':
+        # Obtiene el nombre del archivo
+        filename = uploaded_file.filename
+        # Guarda el archivo en el sistema 
+        uploaded_file.save(filename)
         
-#         # Abre el archivo recién guardado en modo lectura
-#         with open(filename, 'r') as file:
-#             # Lee el contenido del archivo y lo almacena en la variable public_key_content
-#             public_key_content = file.read()
-#             print(public_key_content)
+        # Abre el archivo recién guardado en modo lectura
+        with open(filename, 'r') as file:
+            # Lee el contenido del archivo y lo almacena en la variable public_key_content
+            public_key_content = file.read()
+            print(public_key_content)
         
-#         return "Clave pública subida exitosamente"
-#     else:
-#         return "No se ha seleccionado ningún archivo"
+        return "Clave pública subida exitosamente"
+    else:
+        return "No se ha seleccionado ningún archivo"
 
 
 #LISTAR LAS CLAVES PUBLICAS
@@ -467,7 +467,7 @@ def subir_archivo():
     if archivo.filename == '':
         return 'No se seleccionó ningún archivo'
     # Donde se va a subir
-    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back'
+    carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Claves Asimetrico'
 
     if not os.path.exists(carpeta_destino):
         os.makedirs(carpeta_destino)
