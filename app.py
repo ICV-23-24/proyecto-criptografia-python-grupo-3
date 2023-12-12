@@ -276,36 +276,35 @@ def encrypt_file_route_des():
 #DESENCRIPTAR CON EL DES
 @app.route('/decrypt-filedes', methods=['POST'])
 def decrypt_file_route_des():
+# Se espera que se adjunte un archivo de clave en la solicitud
+# este archivo se lee para obtener la clave para el descifrado DES
     key_file = request.files['key']
     key = key_file.read()
-
+# Se espera que se adjunte un archivo (file) para descifrarlo
+# El contenido del archivo se lee para obtener el texto que será descifrado  
     ciphertext_file = request.files['file']
     ciphertext = ciphertext_file.read()
 
+    # Desencriptar el archivo
     plaintext = decrypt_file_des(ciphertext, key)
 
+    # Obtener la opción de guardado del request
     save_option = request.form.get('save_option')
 
+    # Lógica para guardar en local o en una ruta compartida
     if save_option == 'local':
+        # Guardar el archivo desencriptado en local
         with open("decrypted_file_des.txt", "wb") as decrypted_file:
             decrypted_file.write(plaintext)
         return send_file("decrypted_file_des.txt", as_attachment=True)
-    
     elif save_option == 'destino':
+        # Guardar en la ruta compartida
         carpeta_destino = '\\\\DESKTOP-2HO19U6\\Colombia is Back\\Descifrados DES'
         if not os.path.exists(carpeta_destino):
             os.makedirs(carpeta_destino)
 
         nombre_archivo_desencriptado = secure_filename(ciphertext_file.filename)
         ruta_destino = os.path.join(carpeta_destino, nombre_archivo_desencriptado)
-
-        if os.path.exists(ruta_destino):
-            base, extension = os.path.splitext(nombre_archivo_desencriptado)
-            contador = 1
-            while os.path.exists(os.path.join(carpeta_destino, f"{base}_{contador}{extension}")):
-                contador += 1
-            nombre_archivo_desencriptado = f"{base}_{contador}{extension}"
-            ruta_destino = os.path.join(carpeta_destino, nombre_archivo_desencriptado)
 
         with open(ruta_destino, 'wb') as decrypted_file:
             decrypted_file.write(plaintext)
