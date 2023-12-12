@@ -1,1 +1,140 @@
-varus o malphite
+ALTER SESSION SET CONTAINER=XEPDB1;
+
+CREATE TABLESPACE TiendaCrecimientoLento 
+DATAFILE 'C:\oradata\CrecimientoLento.dbf' 
+SIZE 20M;
+
+CREATE TABLESPACE TiendaCrecimientoConstante 
+DATAFILE 'C:\oradata\CrecimientoConstante.dbf' 
+SIZE 20M;
+
+CREATE USER Tienda IDENTIFIED BY tienda
+DEFAULT TABLESPACE TiendaCrecimientoConstante;
+
+GRANT CONNECT,RESOURCE,PDB_DBA,DBA TO Tienda;
+
+ALTER SESSION SET CONTAINER=XEPDB1;
+
+CREATE TABLE PROVEEDOR (
+    codProv NUMBER(4) PRIMARY KEY,
+    NombreProv VARCHAR2(25) NOT NULL,
+    gerente VARCHAR2(20) NOT NULL
+)TABLESPACE TiendaCrecimientoLento STORAGE (INITIAL 1K NEXT 4K);
+
+CREATE TABLE PRODUCTO (
+    codProducto NUMBER(4) PRIMARY KEY,
+    NombreComercial VARCHAR2(30) NOT NULL,
+    nombreInt VARCHAR2(10) NOT NULL,
+    Tipo CHAR(1) CHECK(Tipo IN ('C', 'S', 'P', 'D', 'F')),
+    Iva NUMBER(4) NOT NULL,
+    prCoste FLOAT NOT NULL,
+    prVenta FLOAT NOT NULL
+)TABLESPACE TiendaCrecimientoConstante STORAGE (INITIAL 3K NEXT 10K);
+
+CREATE TABLE EMPLEADO (
+    dniEmpl VARCHAR2(9) PRIMARY KEY,
+    Nombre VARCHAR2(12) NOT NULL,
+    prApellido VARCHAR2(20) NOT NULL,
+    sgApellido VARCHAR2(20),
+    Cuenta NUMBER(20) NOT NULL,
+    Direccion VARCHAR2(15) NOT NULL,
+    Telefono NUMBER(9) NOT NULL,
+    Correo VARCHAR2(20) NOT NULL,
+    Ciudad VARCHAR2(10) NOT NULL,
+    Sueldo FLOAT
+)TABLESPACE TiendaCrecimientoLento STORAGE (INITIAL 5K NEXT 20K);
+
+CREATE TABLE CLIENTE (
+    dniCl VARCHAR2(9) PRIMARY KEY,
+    Nombre VARCHAR2(12) NOT NULL,
+    prApellido VARCHAR2(20) NOT NULL,
+    sgApellido VARCHAR2(20),
+    Direccion VARCHAR2(15) NOT NULL,
+    Telefono NUMBER(9) NOT NULL,
+    Correo VARCHAR2(20) NOT NULL,
+    Ciudad VARCHAR2(10) NOT NULL
+)TABLESPACE TiendaCrecimientoConstante STORAGE (INITIAL 11K NEXT 30K);
+
+CREATE TABLE VENTA(
+    codVenta NUMBER(5) PRIMARY KEY,
+    fechaHora DATE,
+    dniEmp VARCHAR2(9) NOT NULL,
+    dniCli VARCHAR2(9) NOT NULL,
+    FOREIGN KEY (dniEmp) REFERENCES EMPLEADO(dniEmpl),
+    FOREIGN KEY (dniCli) REFERENCES CLIENTE(dniCl)
+)TABLESPACE TiendaCrecimientoConstante STORAGE(INITIAL 12K NEXT 70K);
+
+CREATE TABLE COMPRA(
+    codCompra NUMBER(5) PRIMARY KEY,
+    fechaHora DATE,
+    dniEmp VARCHAR2(9) NOT NULL,
+    codProv NUMBER(2) NOT NULL,
+    FOREIGN KEY (dniEmp) REFERENCES EMPLEADO(dniEmpl),
+    FOREIGN KEY (codProv) REFERENCES PROVEEDOR(codProv)
+)TABLESPACE TiendaCrecimientoConstante STORAGE(INITIAL 20K NEXT 65K);
+
+CREATE TABLE LINEAVENTA(
+    codVenta NUMBER(5),
+    codProducto NUMBER(4),
+    cant NUMBER(3),
+    PRIMARY KEY(codVenta,codProducto),
+    FOREIGN KEY (codVenta) REFERENCES VENTA(codVenta),
+    FOREIGN KEY (codProducto) REFERENCES PRODUCTO(codProducto)
+)TABLESPACE TiendaCrecimientoConstante STORAGE(INITIAL 22K NEXT 70K);
+
+CREATE TABLE LINEACOMPRA(
+    codCompra NUMBER(5),
+    codProducto NUMBER(4),
+    cant NUMBER(3),
+    PRIMARY KEY(codCompra,codProducto),
+    FOREIGN KEY (codCompra) REFERENCES COMPRA(codCompra),
+    FOREIGN KEY (codProducto) REFERENCES PRODUCTO(codProducto)
+)TABLESPACE TiendaCrecimientoConstante STORAGE(INITIAL 22K NEXT 70K);
+
+INSERT INTO CLIENTE VALUES
+  (33810321,'Margarita','Salas','Blanco','Avda Itala 143',618098381,'marga@gmail.com','Madrid');
+
+INSERT INTO CLIENTE VALUES
+  (12630401,'Maria','Blasco','Aragon','Avda Roja 12 1A',666132931,'mablas@gmail.com','Sevilla');
+
+INSERT INTO PROVEEDOR VALUES
+  (1,'Components SL','David Blanco');
+
+INSERT INTO PROVEEDOR VALUES
+  (2,'InfoCom SA','Alejandro Canta');
+
+INSERT INTO PRODUCTO VALUES
+  (1,'Tarjeta Gráfica EX Th5','TGEX5','C',10,59.95,99);
+
+INSERT INTO PRODUCTO VALUES
+  (2,'MacBook 12N 32G 2TSSD','A12322','P',21,3195,3995);
+
+INSERT INTO VENTA VALUES
+  (1,'01/10/22','98103495','33810321');
+
+INSERT INTO VENTA VALUES
+  (2,'02/11/22','13459394','12630401');
+
+INSERT INTO EMPLEADO VALUES
+  ('98103495','Antonio','Santos','García','98745632123654789654','C/Naranja1432º',673456029,'asan@adeide.com','Valencia',1795.95);
+
+INSERT INTO EMPLEADO VALUES
+  ('13459394','Iván','Alegre','Salas','78569854789654123654','C/Azahar231ºA',618000434,'aile@adeide.com','Madrid',1665.50);
+
+INSERT INTO LINEAVENTA VALUES
+  (1,2,1);
+
+INSERT INTO LINEAVENTA VALUES
+  (1,1,2);
+
+INSERT INTO COMPRA VALUES
+  (1,'15/10/22','98103495',1);
+
+INSERT INTO COMPRA VALUES
+  (2,'18/11/22','13459394',1);
+
+INSERT INTO LINEACOMPRA VALUES
+  (1,1,15);
+
+INSERT INTO LINEACOMPRA VALUES
+  (1,5,10);

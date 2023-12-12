@@ -325,6 +325,10 @@ def download_private_key():
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
 #DESCIFRAR CON LA CLAVE PRIVADA (NO FUNCIONA)
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Hash import SHA256
+
 @app.route('/descifrar_con_clave_privada', methods=['POST'])
 def descifrar_con_clave_privada():
     if 'file' not in request.files or 'private_key_file' not in request.files:
@@ -339,18 +343,14 @@ def descifrar_con_clave_privada():
     encrypted_data = file.read()
     private_key_pem = private_key_file.read()
 
-    private_key = serialization.load_pem_private_key(private_key_pem, password=None, backend=default_backend())
+    private_key = RSA.import_key(private_key_pem)
+    
 
     try:
-        # Descifrar utilizando la clave privada
-        decrypted_data = private_key.decrypt(
-            encrypted_data,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
-        )
+        # Crear un objeto Cipher y descifrar
+        cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA256())
+        decrypted_data = cipher.decrypt(encrypted_data)
+
         # Guardar el archivo descifrado localmente
         with open('decrypted_file.txt', 'wb') as decrypted_file:
             decrypted_file.write(decrypted_data)
