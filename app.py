@@ -343,17 +343,21 @@ def decrypt_file_route_des():
  ##  ##    #####    ####    ##   ##  #######   ####    #### ##   ####      ####    #####
 
 ############################################################################################
+
+# Especificamos la carpeta de destino para subir archivos, se llamará upload
 app.config['UPLOAD_FOLDER'] = 'upload'
 
 @app.route('/generate-keys', methods=['POST'])
 def generate_keys():
+    # Genera un par de claves RSA de 2048 bits
     key = RSA.generate(2048)
     private_key = key.export_key()
     public_key = key.publickey().export_key()
 
+    # Guarda la clave privada en un archivo llamado 'private_key.pem'
     with open('private_key.pem', 'wb') as private_file:
         private_file.write(private_key)
-
+    # Guarda la clave pública en un archivo llamado 'public_key.pem'
     with open('public_key.pem', 'wb') as public_file:
         public_file.write(public_key)
 
@@ -361,10 +365,12 @@ def generate_keys():
 
 @app.route('/download-private-key')
 def download_private_key():
+    # devuelve el archivo 'private_key.pem' como un archivo pa descargar
     return send_file('private_key.pem', as_attachment=True)
 
 @app.route('/download-public-key')
 def download_public_key():
+    # devuelve el archivo 'public_key.pem' como un archivo pa descargar
     return send_file('public_key.pem', as_attachment=True)
 
 # CIFRAR CON CLAVE PÚBLICA
@@ -410,12 +416,15 @@ def encrypt():
 @app.route('/decrypt', methods=['POST'])
 def decrypt():
     try:
+        # Se recibe el archivo y se guarda en el servidor que es la carpeta uploads esa
         file_to_decrypt = request.files['file_to_decrypt']
         file_to_decrypt.save(os.path.join(app.config['UPLOAD_FOLDER'], 'file_to_decrypt.bin'))
 
+        # Se recibe la clave privada RSA y se guarda en el proyecto como private_key.pem
         private_key = request.files['private_key']
         private_key.save(os.path.join(app.config['UPLOAD_FOLDER'], 'private_key.pem'))
 
+        # Se importa la clave privada RSA para usarla en el cifrado RSA
         private_key = RSA.import_key(open(os.path.join(app.config['UPLOAD_FOLDER'], 'private_key.pem')).read())
         cipher_rsa = PKCS1_OAEP.new(private_key)
 
